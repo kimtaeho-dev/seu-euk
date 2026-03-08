@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import Animated from 'react-native-reanimated';
 import { GestureDetector } from 'react-native-gesture-handler';
@@ -8,8 +8,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing } from '../styles/theme';
 import { CONSTANTS } from '../utils/constants';
 import type { useSwipeGesture } from '../hooks/useSwipeGesture';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface SwipeCardProps {
   asset: Asset;
@@ -58,11 +56,19 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
     <View style={styles.container}>
       {/* 다음 사진 프리렌더 (현재 카드 아래) */}
       {nextAsset && (
-        <Image
-          source={{ uri: nextAsset.uri }}
-          style={styles.nextImage}
-          contentFit="contain"
-        />
+        <View style={StyleSheet.absoluteFill}>
+          <Image
+            source={{ uri: nextAsset.uri }}
+            style={styles.blurBackground}
+            contentFit="cover"
+            blurRadius={30}
+          />
+          <Image
+            source={{ uri: nextAsset.uri }}
+            style={styles.nextImage}
+            contentFit="contain"
+          />
+        </View>
       )}
 
       {/* 스와이프 카드 */}
@@ -75,6 +81,14 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
             </View>
           ) : (
             <>
+              {/* 블러 배경 */}
+              <Image
+                source={{ uri: asset.uri }}
+                style={styles.blurBackground}
+                contentFit="cover"
+                blurRadius={30}
+              />
+              {/* 원본 사진 */}
               <Image
                 key={retryKey}
                 source={{ uri: asset.uri }}
@@ -117,14 +131,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.backgroundDark,
   },
+  blurBackground: {
+    ...StyleSheet.absoluteFillObject,
+  },
   nextImage: {
     ...StyleSheet.absoluteFillObject,
-    width: SCREEN_WIDTH,
-    height: '100%',
   },
   card: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
   },
   iconContainer: {
     position: 'absolute',
@@ -136,8 +150,7 @@ const styles = StyleSheet.create({
     padding: spacing.xs,
   },
   image: {
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
+    ...StyleSheet.absoluteFillObject,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
