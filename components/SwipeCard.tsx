@@ -50,7 +50,11 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
     }
   }, []);
 
-  // asset 변경 시 이미지 숨김 → onLoad 후 표시 (displayNextAsset는 유지)
+  // 로컬 변수로 현재 렌더에 즉시 반영 (setState는 다음 렌더에야 적용되므로)
+  let effectiveImageReady = imageReady;
+  let effectiveDisplayAsset = displayNextAsset;
+
+  // asset 변경 시 이미지 숨김 → onLoad 후 표시
   const prevAssetId = useRef(asset.id);
   let isTransitioning = false;
   if (prevAssetId.current !== asset.id) {
@@ -59,30 +63,33 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
     setImageError(false);
     retryCount.current = 0;
     isTransitioning = true;
+    effectiveImageReady = false;
     // undo(역방향) 전환 시 배경에 잘못된 사진이 보이는 것 방지
     if (displayNextAsset?.id !== asset.id) {
+      effectiveDisplayAsset = asset;
       setDisplayNextAsset(asset);
     }
   }
 
   // 전환 중이 아닐 때 nextAsset 변경 시 즉시 반영
   if (imageReady && !isTransitioning && nextAsset?.id !== displayNextAsset?.id) {
+    effectiveDisplayAsset = nextAsset;
     setDisplayNextAsset(nextAsset);
   }
 
   return (
     <View style={styles.container}>
-      {/* 다음 사진 프리렌더 (현재 카드 아래) — 전환 중에는 이전 값 유지 */}
-      {displayNextAsset && (
+      {/* 다음 사진 프리렌더 (현재 카드 아래) — 전환 중에는 현재 사진으로 교체 */}
+      {effectiveDisplayAsset && (
         <View style={StyleSheet.absoluteFill}>
           <Image
-            source={{ uri: displayNextAsset.uri }}
+            source={{ uri: effectiveDisplayAsset.uri }}
             style={styles.blurBackground}
             contentFit="cover"
             blurRadius={30}
           />
           <Image
-            source={{ uri: displayNextAsset.uri }}
+            source={{ uri: effectiveDisplayAsset.uri }}
             style={styles.nextImage}
             contentFit="contain"
           />
@@ -102,7 +109,7 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
               {/* 블러 배경 */}
               <Image
                 source={{ uri: asset.uri }}
-                style={[styles.blurBackground, { opacity: imageReady ? 1 : 0 }]}
+                style={[styles.blurBackground, { opacity: effectiveImageReady ? 1 : 0 }]}
                 contentFit="cover"
                 blurRadius={30}
               />
@@ -110,7 +117,7 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
               <Image
                 key={retryKey}
                 source={{ uri: asset.uri }}
-                style={[styles.image, { opacity: imageReady ? 1 : 0 }]}
+                style={[styles.image, { opacity: effectiveImageReady ? 1 : 0 }]}
                 contentFit="contain"
                 onLoad={handleLoadEnd}
                 onError={handleError}
