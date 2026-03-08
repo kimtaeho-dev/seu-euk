@@ -26,16 +26,19 @@ export default function MainScreen() {
     deleteAsset,
   } = usePhotos();
   const { restore, save } = useSession();
-  const { enqueue, undo, showUndoToast, flushOnKeep } = useDeleteQueue({
+  const { enqueue, undo, showUndoToast, flushOnKeep, flush } = useDeleteQueue({
     onDelete: deleteAsset,
   });
 
   const handleSwipeComplete = useCallback(
     async (decision: SwipeDecision) => {
-      if (!currentAsset) return;
+      // 스토어에서 직접 읽어 stale closure 방지
+      const store = usePhotoStore.getState();
+      const asset = store.assets[store.currentIndex];
+      if (!asset) return;
 
       if (decision === 'delete') {
-        await enqueue(currentAsset);
+        await enqueue(asset);
       } else {
         await flushOnKeep();
       }
@@ -50,7 +53,7 @@ export default function MainScreen() {
         lastUpdated: Date.now(),
       });
     },
-    [currentAsset, enqueue, flushOnKeep, moveToNext, save, totalCount],
+    [enqueue, flushOnKeep, moveToNext, save, totalCount],
   );
 
   const swipe = useSwipeGesture({
@@ -78,12 +81,14 @@ export default function MainScreen() {
     init();
   }, []);
 
-  // 완료 체크
+  // 완료 체크: 큐에 남은 삭제 flush 후 이동
   useEffect(() => {
     if (isComplete && !isLoading) {
-      router.replace('/complete');
+      flush().then(() => {
+        router.replace('/complete');
+      });
     }
-  }, [isComplete, isLoading, router]);
+  }, [isComplete, isLoading, router, flush]);
 
   // 새 사진 전환 시 animateIn
   useEffect(() => {
