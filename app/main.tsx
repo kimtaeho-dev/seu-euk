@@ -81,14 +81,18 @@ export default function MainScreen() {
     init();
   }, []);
 
-  // 완료 체크: 큐에 남은 삭제 flush 후 이동
+  // 완료 체크: 사진이 없거나 모두 정리한 경우
   useEffect(() => {
-    if (isComplete && !isLoading) {
+    if (isLoading) return;
+
+    if (isComplete || (!currentAsset && totalCount > 0)) {
       flush().then(() => {
         router.replace('/complete');
       });
+    } else if (!currentAsset && totalCount === 0) {
+      router.replace('/empty');
     }
-  }, [isComplete, isLoading, router, flush]);
+  }, [isComplete, isLoading, currentAsset, totalCount, router, flush]);
 
   // 새 사진 전환 시 animateIn
   useEffect(() => {
