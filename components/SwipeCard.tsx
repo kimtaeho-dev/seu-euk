@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import Animated from 'react-native-reanimated';
 import { GestureDetector } from 'react-native-gesture-handler';
@@ -23,13 +23,13 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
     deleteIndicatorStyle,
   } = swipe;
 
-  const [imageLoading, setImageLoading] = useState(false);
+  const [imageReady, setImageReady] = useState(true);
   const [imageError, setImageError] = useState(false);
   const retryCount = useRef(0);
   const [retryKey, setRetryKey] = useState(0);
 
   const handleLoadEnd = useCallback(() => {
-    setImageLoading(false);
+    setImageReady(true);
     retryCount.current = 0;
   }, []);
 
@@ -38,15 +38,16 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
       retryCount.current += 1;
       setRetryKey((prev) => prev + 1);
     } else {
-      setImageLoading(false);
+      setImageReady(true);
       setImageError(true);
     }
   }, []);
 
-  // asset 변경 시 리셋
+  // asset 변경 시 이미지 숨김 → onLoad 후 표시
   const prevAssetId = useRef(asset.id);
   if (prevAssetId.current !== asset.id) {
     prevAssetId.current = asset.id;
+    setImageReady(false);
     setImageError(false);
     retryCount.current = 0;
   }
@@ -82,26 +83,20 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
             <>
               {/* 블러 배경 */}
               <Image
-                key={`blur-${asset.id}`}
                 source={{ uri: asset.uri }}
-                style={styles.blurBackground}
+                style={[styles.blurBackground, { opacity: imageReady ? 1 : 0 }]}
                 contentFit="cover"
                 blurRadius={30}
               />
               {/* 원본 사진 */}
               <Image
-                key={`img-${asset.id}-${retryKey}`}
+                key={retryKey}
                 source={{ uri: asset.uri }}
-                style={styles.image}
+                style={[styles.image, { opacity: imageReady ? 1 : 0 }]}
                 contentFit="contain"
                 onLoad={handleLoadEnd}
                 onError={handleError}
               />
-              {imageLoading && (
-                <View style={styles.loadingOverlay}>
-                  <ActivityIndicator size="large" color={colors.accentStart} />
-                </View>
-              )}
             </>
           )}
 
@@ -139,6 +134,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
+    backgroundColor: colors.backgroundDark,
   },
   iconContainer: {
     position: 'absolute',
@@ -151,12 +147,6 @@ const styles = StyleSheet.create({
   },
   image: {
     ...StyleSheet.absoluteFillObject,
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.backgroundDark,
   },
   placeholder: {
     flex: 1,
