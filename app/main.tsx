@@ -16,6 +16,7 @@ import type { SwipeDecision } from '../types';
 export default function MainScreen() {
   const router = useRouter();
   const {
+    assets,
     currentAsset,
     currentIndex,
     totalCount,
@@ -24,6 +25,8 @@ export default function MainScreen() {
     loadInitial,
     moveToNext,
   } = usePhotos();
+
+  const nextAsset = assets[currentIndex + 1] ?? undefined;
   const { restore, save } = useSession();
   const { enqueue, undo, showUndoToast, flush } = useDeleteQueue();
 
@@ -62,7 +65,7 @@ export default function MainScreen() {
       // 이전 사진으로 복귀
       const store = usePhotoStore.getState();
       store.setCurrentIndex(Math.max(0, store.currentIndex - 1));
-      swipe.animateIn();
+      swipe.resetPosition();
     }
   }, [undo, swipe]);
 
@@ -89,10 +92,10 @@ export default function MainScreen() {
     }
   }, [isComplete, isLoading, currentAsset, totalCount, router, flush]);
 
-  // 새 사진 전환 시 animateIn
+  // 새 사진 전환 시 즉시 리셋
   useEffect(() => {
     if (currentAsset) {
-      swipe.animateIn();
+      swipe.resetPosition();
     }
   }, [currentAsset?.id]);
 
@@ -114,7 +117,7 @@ export default function MainScreen() {
       <ProgressHeader current={currentIndex + 1} total={totalCount} />
 
       {/* 스와이프 카드 */}
-      <SwipeCard asset={currentAsset} swipe={swipe} />
+      <SwipeCard asset={currentAsset} nextAsset={nextAsset} swipe={swipe} />
 
       {/* 날짜 표시 */}
       <View style={styles.dateContainer}>

@@ -56,16 +56,12 @@ export function useSwipeGesture({ onSwipe, enabled = true }: UseSwipeGestureOpti
     });
   }, [translateY, opacity, scale]);
 
-  /** 새 카드 진입 애니메이션 */
-  const animateIn = useCallback(() => {
-    isAnimating.value = true;
+  /** 카드 위치 즉시 리셋 (애니메이션 없음) */
+  const resetPosition = useCallback(() => {
     translateY.value = 0;
+    opacity.value = 1;
     scale.value = 1;
-    opacity.value = 0;
-
-    opacity.value = withTiming(1, { duration: CONSTANTS.FADE_IN_DURATION }, () => {
-      isAnimating.value = false;
-    });
+    isAnimating.value = false;
   }, [translateY, opacity, scale, isAnimating]);
 
   const gesture = Gesture.Pan()
@@ -176,7 +172,7 @@ export function useSwipeGesture({ onSwipe, enabled = true }: UseSwipeGestureOpti
     deleteIndicatorStyle,
     progressAnimatedStyle,
     resetCard,
-    animateIn,
+    resetPosition,
     translateY,
   };
 }

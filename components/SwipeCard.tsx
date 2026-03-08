@@ -13,10 +13,11 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface SwipeCardProps {
   asset: Asset;
+  nextAsset?: Asset;
   swipe: ReturnType<typeof useSwipeGesture>;
 }
 
-export default function SwipeCard({ asset, swipe }: SwipeCardProps) {
+export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
   const {
     gesture,
     cardAnimatedStyle,
@@ -55,6 +56,15 @@ export default function SwipeCard({ asset, swipe }: SwipeCardProps) {
 
   return (
     <View style={styles.container}>
+      {/* 다음 사진 프리렌더 (현재 카드 아래) */}
+      {nextAsset && (
+        <Image
+          source={{ uri: nextAsset.uri }}
+          style={styles.nextImage}
+          contentFit="contain"
+        />
+      )}
+
       {/* 스와이프 카드 */}
       <GestureDetector gesture={gesture}>
         <Animated.View style={[styles.card, cardAnimatedStyle]}>
@@ -81,11 +91,7 @@ export default function SwipeCard({ asset, swipe }: SwipeCardProps) {
             </>
           )}
 
-          {/* 유지 피드백 — 테두리 + 아이콘 */}
-          <Animated.View
-            style={[styles.feedbackBorder, styles.keepBorder, keepIndicatorStyle]}
-            pointerEvents="none"
-          />
+          {/* 유지 피드백 — 아이콘 */}
           <Animated.View
             style={[styles.iconContainer, keepIndicatorStyle]}
             pointerEvents="none"
@@ -93,11 +99,7 @@ export default function SwipeCard({ asset, swipe }: SwipeCardProps) {
             <Ionicons name="checkmark-circle" size={48} color={colors.keepGreen} />
           </Animated.View>
 
-          {/* 삭제 피드백 — 테두리 + 아이콘 */}
-          <Animated.View
-            style={[styles.feedbackBorder, styles.deleteBorder, deleteIndicatorStyle]}
-            pointerEvents="none"
-          />
+          {/* 삭제 피드백 — 아이콘 */}
           <Animated.View
             style={[styles.iconContainer, deleteIndicatorStyle]}
             pointerEvents="none"
@@ -115,19 +117,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.backgroundDark,
   },
+  nextImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: SCREEN_WIDTH,
+    height: '100%',
+  },
   card: {
     flex: 1,
-  },
-  feedbackBorder: {
-    ...StyleSheet.absoluteFillObject,
-    borderWidth: 3,
-    zIndex: 5,
-  },
-  keepBorder: {
-    borderColor: colors.keepGreen,
-  },
-  deleteBorder: {
-    borderColor: colors.deleteRed,
+    backgroundColor: colors.backgroundDark,
   },
   iconContainer: {
     position: 'absolute',
