@@ -32,11 +32,28 @@ export function usePhotos() {
           sortBy: [MediaLibrary.SortBy.creationTime],
         });
 
-        setAssets(result.assets);
+        let allAssets = [...result.assets];
+        let cursor = result.endCursor;
+        let hasMore = result.hasNextPage;
+
+        // startIndex까지 필요한 만큼 추가 로드
+        while (allAssets.length <= startIndex && hasMore) {
+          const nextResult = await MediaLibrary.getAssetsAsync({
+            first: CONSTANTS.PAGE_SIZE,
+            after: cursor,
+            mediaType: MediaLibrary.MediaType.photo,
+            sortBy: [MediaLibrary.SortBy.creationTime],
+          });
+          allAssets = [...allAssets, ...nextResult.assets];
+          cursor = nextResult.endCursor;
+          hasMore = nextResult.hasNextPage;
+        }
+
+        setAssets(allAssets);
         setTotalCount(result.totalCount);
-        setEndCursor(result.endCursor);
-        setHasNextPage(result.hasNextPage);
-        setCurrentIndex(Math.min(startIndex, result.assets.length - 1));
+        setEndCursor(cursor);
+        setHasNextPage(hasMore);
+        setCurrentIndex(Math.min(startIndex, allAssets.length - 1));
       } finally {
         setIsLoading(false);
       }

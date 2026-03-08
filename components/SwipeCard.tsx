@@ -23,7 +23,7 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
     deleteIndicatorStyle,
   } = swipe;
 
-  const [imageLoading, setImageLoading] = useState(true);
+  const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
   const retryCount = useRef(0);
   const [retryKey, setRetryKey] = useState(0);
@@ -47,7 +47,6 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
   const prevAssetId = useRef(asset.id);
   if (prevAssetId.current !== asset.id) {
     prevAssetId.current = asset.id;
-    setImageLoading(true);
     setImageError(false);
     retryCount.current = 0;
   }

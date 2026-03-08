@@ -8,7 +8,7 @@ interface PhotoDateProps {
 }
 
 export default function PhotoDate({ creationTime, style }: PhotoDateProps) {
-  const label = formatPhotoDate(new Date(creationTime * 1000));
+  const label = formatPhotoDate(new Date(creationTime));
 
   return (
     <Text style={[styles.date, style]}>
