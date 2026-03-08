@@ -32,9 +32,26 @@ export function useDeleteQueue({ onDeleteFailed }: UseDeleteQueueOptions = {}) {
     }
   }, []);
 
-  /** 삭제 큐에 추가 (실제 삭제는 flush 시 일괄 수행) */
+  /** 이전 대기 항목을 휴지통으로 즉시 이동 */
+  const flushPrevious = useCallback(() => {
+    const items = usePhotoStore.getState().pendingDeletes;
+    if (items.length === 0) return;
+
+    const { addToTrash } = useTrashStore.getState();
+    clearPendingDeletes();
+    for (const asset of items) {
+      addToTrash(asset);
+      removeAssetById(asset.id);
+      incrementDeletedCount();
+    }
+  }, [clearPendingDeletes, removeAssetById, incrementDeletedCount]);
+
+  /** 삭제 큐에 추가 (이전 항목은 즉시 휴지통으로 이동) */
   const enqueue = useCallback(
     (asset: Asset) => {
+      // 정책: 큐 최대 1개, 새 삭제 시 이전 큐 즉시 실행
+      flushPrevious();
+
       addPendingDelete(asset);
       setLastDeletedAsset(asset);
       setShowUndoToast(true);
@@ -44,7 +61,7 @@ export function useDeleteQueue({ onDeleteFailed }: UseDeleteQueueOptions = {}) {
         setShowUndoToast(false);
       }, CONSTANTS.UNDO_TIMEOUT);
     },
-    [addPendingDelete, setLastDeletedAsset, setShowUndoToast, clearUndoTimer],
+    [flushPrevious, addPendingDelete, setLastDeletedAsset, setShowUndoToast, clearUndoTimer],
   );
 
   /** Undo: 마지막 삭제 취소 */
@@ -60,24 +77,13 @@ export function useDeleteQueue({ onDeleteFailed }: UseDeleteQueueOptions = {}) {
     return restoredAsset;
   }, [lastDeletedAsset, removePendingDelete, clearUndoTimer, setLastDeletedAsset, setShowUndoToast]);
 
-  /** 휴지통으로 이동 (세션 완료 시 호출) */
+  /** 남은 대기 항목을 휴지통으로 이동 (세션 완료 시 호출) */
   const flush = useCallback(async () => {
     clearUndoTimer();
     setShowUndoToast(false);
     setLastDeletedAsset(null);
-
-    const items = usePhotoStore.getState().pendingDeletes;
-    if (items.length === 0) return;
-
-    clearPendingDeletes();
-
-    const { addToTrash } = useTrashStore.getState();
-    for (const asset of items) {
-      addToTrash(asset);
-      removeAssetById(asset.id);
-      incrementDeletedCount();
-    }
-  }, [clearUndoTimer, setShowUndoToast, setLastDeletedAsset, clearPendingDeletes, removeAssetById, incrementDeletedCount]);
+    flushPrevious();
+  }, [clearUndoTimer, setShowUndoToast, setLastDeletedAsset, flushPrevious]);
 
   /** 큐 취소 (삭제하지 않고 비우기 — 앱 이탈 시) */
   const cancel = useCallback(() => {
