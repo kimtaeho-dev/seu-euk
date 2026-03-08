@@ -82,6 +82,7 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
             <>
               {/* 블러 배경 */}
               <Image
+                key={`blur-${asset.id}`}
                 source={{ uri: asset.uri }}
                 style={styles.blurBackground}
                 contentFit="cover"
@@ -89,7 +90,7 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
               />
               {/* 원본 사진 */}
               <Image
-                key={retryKey}
+                key={`img-${asset.id}-${retryKey}`}
                 source={{ uri: asset.uri }}
                 style={styles.image}
                 contentFit="contain"
