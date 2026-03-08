@@ -99,11 +99,13 @@ export function usePhotos() {
 
   /** 다음 사진으로 이동 */
   const moveToNext = useCallback(() => {
-    const nextIndex = currentIndex + 1;
+    // flushPrevious()가 currentIndex를 조정할 수 있으므로 store에서 직접 읽기
+    const current = usePhotoStore.getState().currentIndex;
+    const nextIndex = current + 1;
     setCurrentIndex(nextIndex);
     checkAndPreload();
     return nextIndex;
-  }, [currentIndex, setCurrentIndex, checkAndPreload]);
+  }, [setCurrentIndex, checkAndPreload]);
 
   /** 사진 삭제 (미디어 라이브러리에서) */
   const deleteAsset = useCallback(
