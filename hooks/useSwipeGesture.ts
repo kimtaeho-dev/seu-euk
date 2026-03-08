@@ -28,6 +28,7 @@ export function useSwipeGesture({ onSwipe, enabled = true }: UseSwipeGestureOpti
   const opacity = useSharedValue(1);
   const scale = useSharedValue(1);
   const hasTriggeredHaptic = useSharedValue(false);
+  const isAnimating = useSharedValue(false);
 
   /** 임계값 도달 시 햅틱 피드백 */
   const triggerHaptic = useCallback(() => {
@@ -57,23 +58,24 @@ export function useSwipeGesture({ onSwipe, enabled = true }: UseSwipeGestureOpti
 
   /** 새 카드 진입 애니메이션 */
   const animateIn = useCallback(() => {
+    isAnimating.value = true;
     translateY.value = 0;
+    scale.value = 1;
     opacity.value = 0;
-    scale.value = 0.95;
 
-    opacity.value = withTiming(1, { duration: CONSTANTS.FADE_IN_DURATION });
-    scale.value = withSpring(1, {
-      damping: CONSTANTS.SNAP_BACK_DAMPING,
-      stiffness: CONSTANTS.SNAP_BACK_STIFFNESS,
+    opacity.value = withTiming(1, { duration: CONSTANTS.FADE_IN_DURATION }, () => {
+      isAnimating.value = false;
     });
-  }, [translateY, opacity, scale]);
+  }, [translateY, opacity, scale, isAnimating]);
 
   const gesture = Gesture.Pan()
     .enabled(enabled)
     .onStart(() => {
+      if (isAnimating.value) return;
       hasTriggeredHaptic.value = false;
     })
     .onUpdate((event) => {
+      if (isAnimating.value) return;
       translateY.value = event.translationY;
 
       const progress = Math.abs(event.translationY) / THRESHOLD_DISTANCE;
@@ -89,6 +91,7 @@ export function useSwipeGesture({ onSwipe, enabled = true }: UseSwipeGestureOpti
       }
     })
     .onEnd((event) => {
+      if (isAnimating.value) return;
       const distance = Math.abs(event.translationY);
       const velocity = Math.abs(event.velocityY);
       const isThresholdReached =
@@ -108,6 +111,7 @@ export function useSwipeGesture({ onSwipe, enabled = true }: UseSwipeGestureOpti
       const flyOutTarget = isUp ? -SCREEN_HEIGHT : SCREEN_HEIGHT;
 
       // 날아가는 애니메이션
+      isAnimating.value = true;
       translateY.value = withTiming(
         flyOutTarget,
         {

@@ -59,6 +59,7 @@ export function useDeleteQueue({ onDeleteFailed }: UseDeleteQueueOptions = {}) {
       clearUndoTimer();
       undoTimerRef.current = setTimeout(() => {
         setShowUndoToast(false);
+        flushPrevious();
       }, CONSTANTS.UNDO_TIMEOUT);
     },
     [flushPrevious, addPendingDelete, setLastDeletedAsset, setShowUndoToast, clearUndoTimer],
