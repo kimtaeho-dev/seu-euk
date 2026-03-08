@@ -137,22 +137,22 @@ export function useSwipeGesture({ onSwipe, enabled = true }: UseSwipeGestureOpti
     opacity: opacity.value,
   }));
 
-  /** 배경색 피드백 — 유지(초록) 오버레이 */
-  const keepOverlayStyle = useAnimatedStyle(() => ({
+  /** 유지 피드백 (테두리+아이콘) */
+  const keepIndicatorStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
       translateY.value,
       [-THRESHOLD_DISTANCE, 0],
-      [0.3, 0],
+      [1, 0],
       Extrapolation.CLAMP,
     ),
   }));
 
-  /** 배경색 피드백 — 삭제(빨강) 오버레이 */
-  const deleteOverlayStyle = useAnimatedStyle(() => ({
+  /** 삭제 피드백 (테두리+아이콘) */
+  const deleteIndicatorStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
       translateY.value,
       [0, THRESHOLD_DISTANCE],
-      [0, 0.3],
+      [0, 1],
       Extrapolation.CLAMP,
     ),
   }));
@@ -172,8 +172,8 @@ export function useSwipeGesture({ onSwipe, enabled = true }: UseSwipeGestureOpti
   return {
     gesture,
     cardAnimatedStyle,
-    keepOverlayStyle,
-    deleteOverlayStyle,
+    keepIndicatorStyle,
+    deleteIndicatorStyle,
     progressAnimatedStyle,
     resetCard,
     animateIn,

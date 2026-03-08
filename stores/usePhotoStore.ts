@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import type { Asset } from 'expo-media-library';
-import type { DeleteQueueItem } from '../types';
 
 interface PhotoState {
   /** 로드된 사진 목록 */
@@ -17,8 +16,10 @@ interface PhotoState {
   endCursor: string | undefined;
   /** 더 불러올 사진이 있는지 */
   hasNextPage: boolean;
-  /** 삭제 큐 (최대 1개) */
-  deleteQueue: DeleteQueueItem | null;
+  /** 삭제 대기 목록 (세션 종료 시 일괄 삭제) */
+  pendingDeletes: Asset[];
+  /** 마지막 삭제 항목 (Undo 대상) */
+  lastDeletedAsset: Asset | null;
   /** Undo 토스트 표시 여부 */
   showUndoToast: boolean;
 
@@ -31,7 +32,10 @@ interface PhotoState {
   setIsLoading: (loading: boolean) => void;
   setEndCursor: (cursor: string | undefined) => void;
   setHasNextPage: (hasNext: boolean) => void;
-  setDeleteQueue: (item: DeleteQueueItem | null) => void;
+  addPendingDelete: (asset: Asset) => void;
+  removePendingDelete: (id: string) => void;
+  clearPendingDeletes: () => void;
+  setLastDeletedAsset: (asset: Asset | null) => void;
   setShowUndoToast: (show: boolean) => void;
   removeAssetById: (id: string) => void;
   reset: () => void;
@@ -42,10 +46,11 @@ const initialState = {
   currentIndex: 0,
   totalCount: 0,
   deletedCount: 0,
-  isLoading: false,
+  isLoading: true,
   endCursor: undefined as string | undefined,
   hasNextPage: true,
-  deleteQueue: null as DeleteQueueItem | null,
+  pendingDeletes: [] as Asset[],
+  lastDeletedAsset: null as Asset | null,
   showUndoToast: false,
 };
 
@@ -62,11 +67,22 @@ export const usePhotoStore = create<PhotoState>((set) => ({
   setIsLoading: (loading) => set({ isLoading: loading }),
   setEndCursor: (cursor) => set({ endCursor: cursor }),
   setHasNextPage: (hasNext) => set({ hasNextPage: hasNext }),
-  setDeleteQueue: (item) => set({ deleteQueue: item }),
+  addPendingDelete: (asset) =>
+    set((state) => ({ pendingDeletes: [...state.pendingDeletes, asset] })),
+  removePendingDelete: (id) =>
+    set((state) => ({ pendingDeletes: state.pendingDeletes.filter((a) => a.id !== id) })),
+  clearPendingDeletes: () => set({ pendingDeletes: [] }),
+  setLastDeletedAsset: (asset) => set({ lastDeletedAsset: asset }),
   setShowUndoToast: (show) => set({ showUndoToast: show }),
   removeAssetById: (id) =>
-    set((state) => ({
-      assets: state.assets.filter((a) => a.id !== id),
-    })),
+    set((state) => {
+      const removedIndex = state.assets.findIndex((a) => a.id === id);
+      const newAssets = state.assets.filter((a) => a.id !== id);
+      const shouldAdjust = removedIndex !== -1 && removedIndex < state.currentIndex;
+      return {
+        assets: newAssets,
+        currentIndex: shouldAdjust ? state.currentIndex - 1 : state.currentIndex,
+      };
+    }),
   reset: () => set(initialState),
 }));

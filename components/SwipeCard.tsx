@@ -20,8 +20,8 @@ export default function SwipeCard({ asset, swipe }: SwipeCardProps) {
   const {
     gesture,
     cardAnimatedStyle,
-    keepOverlayStyle,
-    deleteOverlayStyle,
+    keepIndicatorStyle,
+    deleteIndicatorStyle,
   } = swipe;
 
   const [imageLoading, setImageLoading] = useState(true);
@@ -55,18 +55,6 @@ export default function SwipeCard({ asset, swipe }: SwipeCardProps) {
 
   return (
     <View style={styles.container}>
-      {/* 유지(초록) 배경 오버레이 */}
-      <Animated.View
-        style={[styles.overlay, styles.keepOverlay, keepOverlayStyle]}
-        pointerEvents="none"
-      />
-
-      {/* 삭제(빨강) 배경 오버레이 */}
-      <Animated.View
-        style={[styles.overlay, styles.deleteOverlay, deleteOverlayStyle]}
-        pointerEvents="none"
-      />
-
       {/* 스와이프 카드 */}
       <GestureDetector gesture={gesture}>
         <Animated.View style={[styles.card, cardAnimatedStyle]}>
@@ -92,6 +80,30 @@ export default function SwipeCard({ asset, swipe }: SwipeCardProps) {
               )}
             </>
           )}
+
+          {/* 유지 피드백 — 테두리 + 아이콘 */}
+          <Animated.View
+            style={[styles.feedbackBorder, styles.keepBorder, keepIndicatorStyle]}
+            pointerEvents="none"
+          />
+          <Animated.View
+            style={[styles.iconContainer, keepIndicatorStyle]}
+            pointerEvents="none"
+          >
+            <Ionicons name="checkmark-circle" size={48} color={colors.keepGreen} />
+          </Animated.View>
+
+          {/* 삭제 피드백 — 테두리 + 아이콘 */}
+          <Animated.View
+            style={[styles.feedbackBorder, styles.deleteBorder, deleteIndicatorStyle]}
+            pointerEvents="none"
+          />
+          <Animated.View
+            style={[styles.iconContainer, deleteIndicatorStyle]}
+            pointerEvents="none"
+          >
+            <Ionicons name="close-circle" size={48} color={colors.deleteRed} />
+          </Animated.View>
         </Animated.View>
       </GestureDetector>
     </View>
@@ -103,19 +115,28 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.backgroundDark,
   },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 0,
-  },
-  keepOverlay: {
-    backgroundColor: colors.keepGreen,
-  },
-  deleteOverlay: {
-    backgroundColor: colors.deleteRed,
-  },
   card: {
     flex: 1,
-    zIndex: 1,
+  },
+  feedbackBorder: {
+    ...StyleSheet.absoluteFillObject,
+    borderWidth: 3,
+    zIndex: 5,
+  },
+  keepBorder: {
+    borderColor: colors.keepGreen,
+  },
+  deleteBorder: {
+    borderColor: colors.deleteRed,
+  },
+  iconContainer: {
+    position: 'absolute',
+    top: '45%',
+    alignSelf: 'center',
+    zIndex: 6,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 32,
+    padding: spacing.xs,
   },
   image: {
     width: SCREEN_WIDTH,
