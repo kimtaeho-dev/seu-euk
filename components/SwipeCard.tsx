@@ -59,6 +59,10 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
     setImageError(false);
     retryCount.current = 0;
     isTransitioning = true;
+    // undo(역방향) 전환 시 배경에 잘못된 사진이 보이는 것 방지
+    if (displayNextAsset?.id !== asset.id) {
+      setDisplayNextAsset(asset);
+    }
   }
 
   // 전환 중이 아닐 때 nextAsset 변경 시 즉시 반영
