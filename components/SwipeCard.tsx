@@ -28,8 +28,14 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
   const retryCount = useRef(0);
   const [retryKey, setRetryKey] = useState(0);
 
+  // nextAsset 버퍼: 카드 이미지 로드 완료 전까지 이전 값 유지
+  const nextAssetRef = useRef(nextAsset);
+  nextAssetRef.current = nextAsset;
+  const [displayNextAsset, setDisplayNextAsset] = useState(nextAsset);
+
   const handleLoadEnd = useCallback(() => {
     setImageReady(true);
+    setDisplayNextAsset(nextAssetRef.current);
     retryCount.current = 0;
   }, []);
 
@@ -39,32 +45,40 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
       setRetryKey((prev) => prev + 1);
     } else {
       setImageReady(true);
+      setDisplayNextAsset(nextAssetRef.current);
       setImageError(true);
     }
   }, []);
 
-  // asset 변경 시 이미지 숨김 → onLoad 후 표시
+  // asset 변경 시 이미지 숨김 → onLoad 후 표시 (displayNextAsset는 유지)
   const prevAssetId = useRef(asset.id);
+  let isTransitioning = false;
   if (prevAssetId.current !== asset.id) {
     prevAssetId.current = asset.id;
     setImageReady(false);
     setImageError(false);
     retryCount.current = 0;
+    isTransitioning = true;
+  }
+
+  // 전환 중이 아닐 때 nextAsset 변경 시 즉시 반영
+  if (imageReady && !isTransitioning && nextAsset?.id !== displayNextAsset?.id) {
+    setDisplayNextAsset(nextAsset);
   }
 
   return (
     <View style={styles.container}>
-      {/* 다음 사진 프리렌더 (현재 카드 아래) */}
-      {nextAsset && (
+      {/* 다음 사진 프리렌더 (현재 카드 아래) — 전환 중에는 이전 값 유지 */}
+      {displayNextAsset && (
         <View style={StyleSheet.absoluteFill}>
           <Image
-            source={{ uri: nextAsset.uri }}
+            source={{ uri: displayNextAsset.uri }}
             style={styles.blurBackground}
             contentFit="cover"
             blurRadius={30}
           />
           <Image
-            source={{ uri: nextAsset.uri }}
+            source={{ uri: displayNextAsset.uri }}
             style={styles.nextImage}
             contentFit="contain"
           />
@@ -134,7 +148,6 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
   },
   iconContainer: {
     position: 'absolute',
