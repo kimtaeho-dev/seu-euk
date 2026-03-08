@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
-import { View, Image, Text, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import Animated from 'react-native-reanimated';
 import { GestureDetector } from 'react-native-gesture-handler';
 import type { Asset } from 'expo-media-library';
@@ -80,8 +81,8 @@ export default function SwipeCard({ asset, swipe }: SwipeCardProps) {
                 key={retryKey}
                 source={{ uri: asset.uri }}
                 style={styles.image}
-                resizeMode="contain"
-                onLoadEnd={handleLoadEnd}
+                contentFit="contain"
+                onLoad={handleLoadEnd}
                 onError={handleError}
               />
               {imageLoading && (
