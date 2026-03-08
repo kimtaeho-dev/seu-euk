@@ -6,14 +6,19 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useDeleteQueue } from '../hooks/useDeleteQueue';
 import { useSession } from '../hooks/useSession';
-import { usePhotos } from '../hooks/usePhotos';
+import { useTrashStore } from '../stores/useTrashStore';
 import { colors } from '../styles/theme';
 
 export default function RootLayout() {
-  const { deleteAsset } = usePhotos();
-  const { cancel } = useDeleteQueue({ onDelete: deleteAsset });
+  const { cancel } = useDeleteQueue();
   const { save, session } = useSession();
   const appState = useRef(AppState.currentState);
+  const loadTrash = useTrashStore((s) => s.loadTrash);
+
+  // 앱 시작 시 휴지통 데이터 복원
+  useEffect(() => {
+    loadTrash();
+  }, [loadTrash]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (nextState: AppStateStatus) => {
@@ -49,6 +54,7 @@ export default function RootLayout() {
           <Stack.Screen name="main" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="complete" options={{ animation: 'fade' }} />
           <Stack.Screen name="empty" options={{ animation: 'fade' }} />
+          <Stack.Screen name="trash" options={{ animation: 'slide_from_right' }} />
         </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>

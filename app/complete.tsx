@@ -12,6 +12,10 @@ export default function CompleteScreen() {
   const { totalCount, deletedCount, reset } = usePhotoStore();
   const { clear } = useSession();
 
+  const handleGoToTrash = useCallback(() => {
+    router.push('/trash');
+  }, [router]);
+
   const handleRestart = useCallback(async () => {
     await clear();
     reset();
@@ -33,13 +37,15 @@ export default function CompleteScreen() {
           <Text style={styles.highlight}>
             {deletedCount.toLocaleString()}장
           </Text>
-          을 삭제했습니다
+          을 휴지통으로 이동했습니다
         </Text>
       </View>
 
       {/* CTA */}
       <View style={styles.buttonContainer}>
-        <Button title="처음부터 다시 정리" onPress={handleRestart} />
+        <Button title="휴지통 확인하기" onPress={handleGoToTrash} />
+        <View style={styles.buttonGap} />
+        <Button title="처음부터 다시 정리" variant="secondary" onPress={handleRestart} />
       </View>
     </View>
   );
@@ -76,5 +82,8 @@ const styles = StyleSheet.create({
   buttonContainer: {
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.huge,
+  },
+  buttonGap: {
+    height: spacing.md,
   },
 });

@@ -1,21 +1,25 @@
 import { useCallback, useRef } from 'react';
 import { usePhotoStore } from '../stores/usePhotoStore';
+import { useTrashStore } from '../stores/useTrashStore';
 import { CONSTANTS } from '../utils/constants';
 import type { Asset } from 'expo-media-library';
-import type { DeleteQueueItem } from '../types';
 
 interface UseDeleteQueueOptions {
-  onDelete: (assetId: string) => Promise<boolean>;
   onDeleteFailed?: () => void;
 }
 
-export function useDeleteQueue({ onDelete, onDeleteFailed }: UseDeleteQueueOptions) {
+export function useDeleteQueue({ onDeleteFailed }: UseDeleteQueueOptions = {}) {
   const {
-    deleteQueue,
+    pendingDeletes,
+    lastDeletedAsset,
     showUndoToast,
-    setDeleteQueue,
+    addPendingDelete,
+    removePendingDelete,
+    clearPendingDeletes,
+    setLastDeletedAsset,
     setShowUndoToast,
     incrementDeletedCount,
+    removeAssetById,
   } = usePhotoStore();
 
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -28,85 +32,67 @@ export function useDeleteQueue({ onDelete, onDeleteFailed }: UseDeleteQueueOptio
     }
   }, []);
 
-  /** 큐에 있는 아이템 실제 삭제 실행 */
-  const flush = useCallback(
-    async (item?: DeleteQueueItem | null) => {
-      const target = item ?? deleteQueue;
-      if (!target) return;
-
-      clearUndoTimer();
-      setShowUndoToast(false);
-      setDeleteQueue(null);
-
-      const success = await onDelete(target.asset.id);
-      if (success) {
-        incrementDeletedCount();
-      } else {
-        onDeleteFailed?.();
-      }
-    },
-    [deleteQueue, clearUndoTimer, setShowUndoToast, setDeleteQueue, onDelete, incrementDeletedCount, onDeleteFailed],
-  );
-
-  /** 삭제 큐에 추가 (이전 큐는 즉시 flush) */
+  /** 삭제 큐에 추가 (실제 삭제는 flush 시 일괄 수행) */
   const enqueue = useCallback(
-    async (asset: Asset) => {
-      // 이전 큐가 있으면 즉시 실행
-      if (deleteQueue) {
-        await flush(deleteQueue);
-      }
-
-      const newItem: DeleteQueueItem = {
-        asset,
-        timestamp: Date.now(),
-      };
-
-      setDeleteQueue(newItem);
+    (asset: Asset) => {
+      addPendingDelete(asset);
+      setLastDeletedAsset(asset);
       setShowUndoToast(true);
 
-      // 3초 후 토스트 숨기기 (실제 삭제는 다음 스와이프 시)
       clearUndoTimer();
       undoTimerRef.current = setTimeout(() => {
         setShowUndoToast(false);
       }, CONSTANTS.UNDO_TIMEOUT);
     },
-    [deleteQueue, flush, setDeleteQueue, setShowUndoToast, clearUndoTimer],
+    [addPendingDelete, setLastDeletedAsset, setShowUndoToast, clearUndoTimer],
   );
 
-  /** Undo: 큐 취소 + 사진 복귀 */
+  /** Undo: 마지막 삭제 취소 */
   const undo = useCallback((): Asset | null => {
-    if (!deleteQueue) return null;
+    if (!lastDeletedAsset) return null;
 
-    const restoredAsset = deleteQueue.asset;
+    const restoredAsset = lastDeletedAsset;
+    removePendingDelete(restoredAsset.id);
     clearUndoTimer();
-    setDeleteQueue(null);
+    setLastDeletedAsset(null);
     setShowUndoToast(false);
 
     return restoredAsset;
-  }, [deleteQueue, clearUndoTimer, setDeleteQueue, setShowUndoToast]);
+  }, [lastDeletedAsset, removePendingDelete, clearUndoTimer, setLastDeletedAsset, setShowUndoToast]);
+
+  /** 휴지통으로 이동 (세션 완료 시 호출) */
+  const flush = useCallback(async () => {
+    clearUndoTimer();
+    setShowUndoToast(false);
+    setLastDeletedAsset(null);
+
+    const items = usePhotoStore.getState().pendingDeletes;
+    if (items.length === 0) return;
+
+    clearPendingDeletes();
+
+    const { addToTrash } = useTrashStore.getState();
+    for (const asset of items) {
+      addToTrash(asset);
+      removeAssetById(asset.id);
+      incrementDeletedCount();
+    }
+  }, [clearUndoTimer, setShowUndoToast, setLastDeletedAsset, clearPendingDeletes, removeAssetById, incrementDeletedCount]);
 
   /** 큐 취소 (삭제하지 않고 비우기 — 앱 이탈 시) */
   const cancel = useCallback(() => {
     clearUndoTimer();
-    setDeleteQueue(null);
+    clearPendingDeletes();
+    setLastDeletedAsset(null);
     setShowUndoToast(false);
-  }, [clearUndoTimer, setDeleteQueue, setShowUndoToast]);
-
-  /** 유지 스와이프 시: 이전 큐 flush + 토스트 숨기기 */
-  const flushOnKeep = useCallback(async () => {
-    if (deleteQueue) {
-      await flush(deleteQueue);
-    }
-    setShowUndoToast(false);
-  }, [deleteQueue, flush, setShowUndoToast]);
+  }, [clearUndoTimer, clearPendingDeletes, setLastDeletedAsset, setShowUndoToast]);
 
   return {
-    deleteQueue,
+    pendingDeletes,
     showUndoToast,
     enqueue,
     undo,
     cancel,
     flush,
-    flushOnKeep,
   };
 }

@@ -3,10 +3,10 @@ import type { Asset } from 'expo-media-library';
 /** 사진 판정 결과 */
 export type SwipeDecision = 'keep' | 'delete';
 
-/** 삭제 큐 아이템 */
-export interface DeleteQueueItem {
+/** 휴지통 아이템 */
+export interface TrashItem {
   asset: Asset;
-  timestamp: number;
+  deletedAt: number;
 }
 
 /** 세션 데이터 */
@@ -28,4 +28,4 @@ export interface SwipeState {
 }
 
 /** 앱 화면 */
-export type AppScreen = 'splash' | 'permission' | 'main' | 'complete' | 'empty';
+export type AppScreen = 'splash' | 'permission' | 'main' | 'complete' | 'empty' | 'trash';

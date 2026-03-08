@@ -21,4 +21,8 @@ export const CONSTANTS = {
   // 저장소
   SESSION_STORAGE_KEY: '@seu_euk_session',
   FIRST_LAUNCH_KEY: '@seu_euk_first_launch',
+
+  // 휴지통
+  TRASH_STORAGE_KEY: '@seu_euk_trash',
+  TRASH_EXPIRY_DAYS: 30,
 } as const;

@@ -25,7 +25,8 @@ seu-euk/
 │   ├── permission.tsx       # S2. 권한 요청
 │   ├── main.tsx             # S3. 메인 (정리)
 │   ├── complete.tsx         # S4. 완료
-│   └── empty.tsx            # S5. 빈 상태
+│   ├── empty.tsx            # S5. 빈 상태
+│   └── trash.tsx            # S6. 휴지통
 ├── components/
 │   ├── SwipeCard.tsx        # 스와이프 카드
 │   ├── ProgressHeader.tsx   # 진척도 헤더
@@ -34,6 +35,7 @@ seu-euk/
 │   └── Button.tsx           # 공통 버튼
 ├── stores/
 │   ├── usePhotoStore.ts     # 사진 상태
+│   ├── useTrashStore.ts     # 휴지통 상태
 │   └── useSessionStore.ts   # 세션 상태
 ├── hooks/
 │   ├── usePhotos.ts         # 사진 로드/삭제
@@ -55,8 +57,10 @@ seu-euk/
 - **스와이프:** ↑위=유지, ↓아래=삭제, 좌우 미사용
 - **임계값:** 화면 높이 30% 이상 또는 속도 800px/s 이상
 - **삭제 큐:** 항상 최대 1개, 새 삭제 시 이전 큐 즉시 실행
+- **휴지통:** 삭제 스와이프 시 앱 내 휴지통으로 이동, 30일 후 자동 만료
+- **실제 삭제:** 휴지통 화면에서 "전체 삭제" 시 OS 삭제 1회 호출
 - **Undo:** 3초 토스트, 마지막 1장만
-- **앱 이탈:** 큐 삭제 취소, 재진입 시 해당 사진부터 재시작
+- **앱 이탈:** 큐 삭제 취소, 휴지통 데이터는 AsyncStorage에 영속 보존
 - **세션:** 마지막 정리 위치 로컬 저장, 재진입 시 이어서 진행
 
 ## Coding Conventions

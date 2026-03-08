@@ -23,24 +23,19 @@ export default function MainScreen() {
     isComplete,
     loadInitial,
     moveToNext,
-    deleteAsset,
   } = usePhotos();
   const { restore, save } = useSession();
-  const { enqueue, undo, showUndoToast, flushOnKeep, flush } = useDeleteQueue({
-    onDelete: deleteAsset,
-  });
+  const { enqueue, undo, showUndoToast, flush } = useDeleteQueue();
 
   const handleSwipeComplete = useCallback(
-    async (decision: SwipeDecision) => {
+    (decision: SwipeDecision) => {
       // 스토어에서 직접 읽어 stale closure 방지
       const store = usePhotoStore.getState();
       const asset = store.assets[store.currentIndex];
       if (!asset) return;
 
       if (decision === 'delete') {
-        await enqueue(asset);
-      } else {
-        await flushOnKeep();
+        enqueue(asset);
       }
 
       const nextIndex = moveToNext();
@@ -53,7 +48,7 @@ export default function MainScreen() {
         lastUpdated: Date.now(),
       });
     },
-    [enqueue, flushOnKeep, moveToNext, save, totalCount],
+    [enqueue, moveToNext, save, totalCount],
   );
 
   const swipe = useSwipeGesture({
