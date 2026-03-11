@@ -1,6 +1,15 @@
+import { useCallback } from 'react';
 import { Pressable, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface ButtonProps {
   title: string;
@@ -17,17 +26,33 @@ export default function Button({
   disabled = false,
   style,
 }: ButtonProps) {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = useCallback(() => {
+    scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+  }, [scale]);
+
+  const handlePressOut = useCallback(() => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+  }, [scale]);
+
+  const handlePress = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onPress();
+  }, [onPress]);
+
   if (variant === 'primary') {
     return (
-      <Pressable
-        onPress={onPress}
+      <AnimatedPressable
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         disabled={disabled}
-        style={({ pressed }) => [
-          styles.base,
-          pressed && styles.pressed,
-          disabled && styles.disabled,
-          style,
-        ]}
+        style={[styles.base, animatedStyle, disabled && styles.disabled, style]}
       >
         <LinearGradient
           colors={[colors.accentStart, colors.accentEnd]}
@@ -39,51 +64,45 @@ export default function Button({
             {title}
           </Text>
         </LinearGradient>
-      </Pressable>
+      </AnimatedPressable>
     );
   }
 
   if (variant === 'text') {
     return (
-      <Pressable
-        onPress={onPress}
+      <AnimatedPressable
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         disabled={disabled}
-        style={({ pressed }) => [
-          styles.textButton,
-          pressed && styles.pressed,
-          style,
-        ]}
+        style={[styles.textButton, animatedStyle, style]}
       >
         <Text style={[styles.textButtonLabel, disabled && styles.disabledText]}>
           {title}
         </Text>
-      </Pressable>
+      </AnimatedPressable>
     );
   }
 
   // secondary
   return (
-    <Pressable
-      onPress={onPress}
+    <AnimatedPressable
+      onPress={handlePress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       disabled={disabled}
-      style={({ pressed }) => [
-        styles.base,
-        styles.secondary,
-        pressed && styles.pressed,
-        disabled && styles.disabled,
-        style,
-      ]}
+      style={[styles.base, styles.secondary, animatedStyle, disabled && styles.disabled, style]}
     >
       <Text style={[styles.secondaryText, disabled && styles.disabledText]}>
         {title}
       </Text>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.xl,
     overflow: 'hidden',
   },
   gradient: {
@@ -94,12 +113,11 @@ const styles = StyleSheet.create({
   },
   primaryText: {
     ...typography.bodyLg,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.textPrimary,
   } as TextStyle,
   secondary: {
-    borderWidth: 1,
-    borderColor: colors.divider,
+    backgroundColor: colors.surfaceDark,
     paddingVertical: spacing.base,
     paddingHorizontal: spacing.xxl,
     alignItems: 'center',
@@ -107,7 +125,7 @@ const styles = StyleSheet.create({
   },
   secondaryText: {
     ...typography.bodyLg,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.textPrimary,
   } as TextStyle,
   textButton: {
@@ -118,11 +136,7 @@ const styles = StyleSheet.create({
   textButtonLabel: {
     ...typography.bodySm,
     color: colors.textSecondary,
-    textDecorationLine: 'underline',
   } as TextStyle,
-  pressed: {
-    opacity: 0.8,
-  },
   disabled: {
     opacity: 0.5,
   },

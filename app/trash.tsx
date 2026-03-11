@@ -20,7 +20,7 @@ import type { TrashItem } from '../types';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const NUM_COLUMNS = 3;
-const ITEM_GAP = 2;
+const ITEM_GAP = 3;
 const ITEM_SIZE = (SCREEN_WIDTH - ITEM_GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
 
 export default function TrashScreen() {
@@ -97,9 +97,6 @@ export default function TrashScreen() {
             source={{ uri: item.asset.uri }}
             style={styles.thumbnail}
           />
-          <View style={styles.restoreOverlay}>
-            <Ionicons name="arrow-undo" size={16} color={colors.textPrimary} />
-          </View>
         </Pressable>
       );
     },
@@ -125,14 +122,11 @@ export default function TrashScreen() {
       </View>
 
       {trashItems.length === 0 ? (
-        /* 빈 상태 */
         <View style={styles.emptyContainer}>
-          <Ionicons name="trash-outline" size={64} color={colors.textTertiary} />
-          <Text style={styles.emptyText}>휴지통이 비어있습니다</Text>
+          <Text style={styles.emptyText}>휴지통이 비어있어요</Text>
         </View>
       ) : (
         <>
-          {/* 그리드 */}
           <FlatList
             data={trashItems}
             renderItem={renderItem}
@@ -142,7 +136,6 @@ export default function TrashScreen() {
             contentContainerStyle={styles.listContent}
           />
 
-          {/* 하단 버튼 */}
           <View style={[styles.buttonContainer, { paddingBottom: insets.bottom + spacing.base }]}>
             {isDeleting ? (
               <ActivityIndicator size="small" color={colors.deleteRed} />
@@ -225,17 +218,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     backgroundColor: colors.surfaceDark,
-  },
-  restoreOverlay: {
-    position: 'absolute',
-    top: spacing.xs,
-    right: spacing.xs,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: borderRadius.full,
-    width: 28,
-    height: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderRadius: 4,
   },
   buttonContainer: {
     paddingHorizontal: spacing.base,
@@ -255,16 +238,15 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingVertical: spacing.md,
     borderRadius: borderRadius.md,
-    borderWidth: 1,
   },
   restoreButton: {
-    borderColor: colors.keepGreen,
+    backgroundColor: colors.surfaceDark,
   },
   deleteButton: {
-    borderColor: colors.deleteRed,
+    backgroundColor: colors.deleteRedBg,
   },
   actionButtonText: {
     ...typography.bodySm,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
 });

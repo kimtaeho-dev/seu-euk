@@ -3,9 +3,10 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import Animated from 'react-native-reanimated';
 import { GestureDetector } from 'react-native-gesture-handler';
+import { LinearGradient } from 'expo-linear-gradient';
 import type { Asset } from 'expo-media-library';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing } from '../styles/theme';
+import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import { CONSTANTS } from '../utils/constants';
 import type { useSwipeGesture } from '../hooks/useSwipeGesture';
 
@@ -28,7 +29,6 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
   const retryCount = useRef(0);
   const [retryKey, setRetryKey] = useState(0);
 
-  // nextAsset 버퍼: 카드 이미지 로드 완료 전까지 이전 값 유지
   const nextAssetRef = useRef(nextAsset);
   nextAssetRef.current = nextAsset;
   const [displayNextAsset, setDisplayNextAsset] = useState(nextAsset);
@@ -50,13 +50,10 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
     }
   }, []);
 
-  // asset 변경 시 이미지 전환 처리
   const prevAssetId = useRef(asset.id);
   let isTransitioning = false;
   if (prevAssetId.current !== asset.id) {
     prevAssetId.current = asset.id;
-    // 순방향: 프리렌더된 "다음"이 "현재"가 됨 → 카드 숨기고 배경 노출 OK
-    // 역방향(undo): 카드 유지 → expo-image가 캐시된 이미지로 즉시 교체
     const isForward = displayNextAsset?.id === asset.id;
     if (isForward) {
       setImageReady(false);
@@ -66,21 +63,20 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
     isTransitioning = true;
   }
 
-  // 전환 중이 아닐 때 nextAsset 변경 시 즉시 반영
   if (imageReady && !isTransitioning && nextAsset?.id !== displayNextAsset?.id) {
     setDisplayNextAsset(nextAsset);
   }
 
   return (
     <View style={styles.container}>
-      {/* 다음 사진 프리렌더 (현재 카드 아래) — 전환 중에는 현재 사진으로 교체 */}
+      {/* 다음 사진 프리렌더 */}
       {displayNextAsset && (
         <View style={StyleSheet.absoluteFill}>
           <Image
             source={{ uri: displayNextAsset.uri }}
             style={styles.blurBackground}
             contentFit="cover"
-            blurRadius={30}
+            blurRadius={40}
           />
           <Image
             source={{ uri: displayNextAsset.uri }}
@@ -100,14 +96,12 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
             </View>
           ) : (
             <>
-              {/* 블러 배경 */}
               <Image
                 source={{ uri: asset.uri }}
                 style={[styles.blurBackground, { opacity: imageReady ? 1 : 0 }]}
                 contentFit="cover"
-                blurRadius={30}
+                blurRadius={40}
               />
-              {/* 원본 사진 */}
               <Image
                 key={retryKey}
                 source={{ uri: asset.uri }}
@@ -116,23 +110,32 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
                 onLoad={handleLoadEnd}
                 onError={handleError}
               />
+              {/* 비네팅 오버레이 */}
+              <LinearGradient
+                colors={['rgba(0,0,0,0.15)', 'transparent', 'transparent', 'rgba(0,0,0,0.15)']}
+                locations={[0, 0.2, 0.8, 1]}
+                style={StyleSheet.absoluteFill}
+                pointerEvents="none"
+              />
             </>
           )}
 
-          {/* 유지 피드백 — 아이콘 */}
+          {/* 유지 피드백 — 텍스트 필 */}
           <Animated.View
-            style={[styles.iconContainer, keepIndicatorStyle]}
+            style={[styles.feedbackPill, styles.keepPill, keepIndicatorStyle]}
             pointerEvents="none"
           >
-            <Ionicons name="checkmark-circle" size={48} color={colors.keepGreen} />
+            <Ionicons name="checkmark" size={20} color={colors.keepGreen} />
+            <Text style={[styles.feedbackText, { color: colors.keepGreen }]}>유지</Text>
           </Animated.View>
 
-          {/* 삭제 피드백 — 아이콘 */}
+          {/* 삭제 피드백 — 텍스트 필 */}
           <Animated.View
-            style={[styles.iconContainer, deleteIndicatorStyle]}
+            style={[styles.feedbackPill, styles.deletePill, deleteIndicatorStyle]}
             pointerEvents="none"
           >
-            <Ionicons name="close-circle" size={48} color={colors.deleteRed} />
+            <Ionicons name="trash-outline" size={20} color={colors.deleteRed} />
+            <Text style={[styles.feedbackText, { color: colors.deleteRed }]}>삭제</Text>
           </Animated.View>
         </Animated.View>
       </GestureDetector>
@@ -154,17 +157,27 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
   },
-  iconContainer: {
+  image: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  feedbackPill: {
     position: 'absolute',
     top: '45%',
     alignSelf: 'center',
     zIndex: 6,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 32,
-    padding: spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: borderRadius.full,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.base,
   },
-  image: {
-    ...StyleSheet.absoluteFillObject,
+  keepPill: {},
+  deletePill: {},
+  feedbackText: {
+    ...typography.bodySm,
+    fontFamily: 'Pretendard-SemiBold',
   },
   placeholder: {
     flex: 1,

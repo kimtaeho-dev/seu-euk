@@ -3,7 +3,6 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as MediaLibrary from 'expo-media-library';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -12,6 +11,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import Button from '../components/Button';
+import Logo from '../components/Logo';
 import { colors, typography, spacing } from '../styles/theme';
 import { CONSTANTS } from '../utils/constants';
 
@@ -19,8 +19,9 @@ export default function SplashScreen() {
   const router = useRouter();
   const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
 
-  const logoScale = useSharedValue(0.8);
+  const logoScale = useSharedValue(0.9);
   const logoOpacity = useSharedValue(0);
+  const logoRotation = useSharedValue(-8);
   const textOpacity = useSharedValue(0);
   const buttonOpacity = useSharedValue(0);
 
@@ -32,16 +33,16 @@ export default function SplashScreen() {
     if (isFirstLaunch === null) return;
 
     if (!isFirstLaunch) {
-      // 재방문: 바로 라우팅
       navigateByPermission();
       return;
     }
 
     // 최초 실행: 애니메이션
-    logoOpacity.value = withTiming(1, { duration: 400 });
-    logoScale.value = withSpring(1, { damping: 12, stiffness: 100 });
-    textOpacity.value = withDelay(200, withTiming(1, { duration: 400 }));
-    buttonOpacity.value = withDelay(400, withTiming(1, { duration: 400 }));
+    logoOpacity.value = withTiming(1, { duration: 600 });
+    logoScale.value = withSpring(1, { damping: 14, stiffness: 80 });
+    logoRotation.value = withSpring(0, { damping: 14, stiffness: 80 });
+    textOpacity.value = withDelay(300, withTiming(1, { duration: 500 }));
+    buttonOpacity.value = withDelay(500, withTiming(1, { duration: 500 }));
   }, [isFirstLaunch]);
 
   const checkFirstLaunch = async () => {
@@ -51,7 +52,7 @@ export default function SplashScreen() {
 
   const navigateByPermission = useCallback(async () => {
     const { status } = await MediaLibrary.getPermissionsAsync();
-    if (status === 'granted') {
+    if (status === 'granted' || status === 'limited') {
       router.replace('/main');
     } else {
       router.replace('/permission');
@@ -65,7 +66,10 @@ export default function SplashScreen() {
 
   const logoStyle = useAnimatedStyle(() => ({
     opacity: logoOpacity.value,
-    transform: [{ scale: logoScale.value }],
+    transform: [
+      { scale: logoScale.value },
+      { rotate: `${logoRotation.value}deg` },
+    ],
   }));
 
   const textStyle = useAnimatedStyle(() => ({
@@ -84,23 +88,17 @@ export default function SplashScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        {/* 로고 */}
+        {/* 로고 + 코랄 glow */}
         <Animated.View style={[styles.logoContainer, logoStyle]}>
-          <LinearGradient
-            colors={[colors.accentStart, colors.accentEnd]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.logo}
-          >
-            <Text style={styles.logoText}>스</Text>
-          </LinearGradient>
+          <View style={styles.glow} />
+          <Logo size={80} />
         </Animated.View>
 
         {/* 앱 이름 + 설명 */}
         <Animated.View style={[styles.textContainer, textStyle]}>
           <Text style={styles.appName}>스윽</Text>
           <Text style={styles.description}>
-            스와이프로 사진을 빠르게 정리하세요
+            오래된 사진, 스윽 정리
           </Text>
         </Animated.View>
       </View>
@@ -120,24 +118,21 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
+    paddingTop: '38%',
     gap: spacing.xxl,
   },
   logoContainer: {
     alignItems: 'center',
-  },
-  logo: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
-    alignItems: 'center',
     justifyContent: 'center',
   },
-  logoText: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: colors.textPrimary,
+  glow: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(232, 132, 92, 0.12)',
   },
   textContainer: {
     alignItems: 'center',
@@ -146,6 +141,7 @@ const styles = StyleSheet.create({
   appName: {
     ...typography.displaySm,
     color: colors.textPrimary,
+    letterSpacing: 4,
   },
   description: {
     ...typography.bodyLg,

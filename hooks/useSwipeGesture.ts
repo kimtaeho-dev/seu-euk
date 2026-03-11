@@ -35,6 +35,16 @@ export function useSwipeGesture({ onSwipe, enabled = true }: UseSwipeGestureOpti
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   }, []);
 
+  /** 유지 스와이프 완료 햅틱 */
+  const triggerKeepHaptic = useCallback(() => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }, []);
+
+  /** 삭제 스와이프 완료 햅틱 */
+  const triggerDeleteHaptic = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  }, []);
+
   /** 스와이프 결과 처리 */
   const handleSwipeComplete = useCallback(
     (decision: SwipeDecision) => {
@@ -106,6 +116,13 @@ export function useSwipeGesture({ onSwipe, enabled = true }: UseSwipeGestureOpti
       const decision: SwipeDecision = isUp ? 'keep' : 'delete';
       const flyOutTarget = isUp ? -SCREEN_HEIGHT : SCREEN_HEIGHT;
 
+      // 방향별 햅틱
+      if (isUp) {
+        runOnJS(triggerKeepHaptic)();
+      } else {
+        runOnJS(triggerDeleteHaptic)();
+      }
+
       // 날아가는 애니메이션
       isAnimating.value = true;
       translateY.value = withTiming(
@@ -133,7 +150,7 @@ export function useSwipeGesture({ onSwipe, enabled = true }: UseSwipeGestureOpti
     opacity: opacity.value,
   }));
 
-  /** 유지 피드백 (테두리+아이콘) */
+  /** 유지 피드백 */
   const keepIndicatorStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
       translateY.value,
@@ -143,7 +160,7 @@ export function useSwipeGesture({ onSwipe, enabled = true }: UseSwipeGestureOpti
     ),
   }));
 
-  /** 삭제 피드백 (테두리+아이콘) */
+  /** 삭제 피드백 */
   const deleteIndicatorStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
       translateY.value,

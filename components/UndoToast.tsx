@@ -4,11 +4,10 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withSequence,
-  runOnJS,
   Easing,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, shadows } from '../styles/theme';
 import { CONSTANTS } from '../utils/constants';
 
@@ -25,7 +24,6 @@ export default function UndoToast({ visible, onUndo, onDismiss }: UndoToastProps
 
   useEffect(() => {
     if (visible) {
-      // slide up 등장
       translateY.value = withTiming(0, {
         duration: CONSTANTS.TOAST_SLIDE_DURATION,
         easing: Easing.out(Easing.cubic),
@@ -34,7 +32,6 @@ export default function UndoToast({ visible, onUndo, onDismiss }: UndoToastProps
         duration: CONSTANTS.TOAST_SLIDE_DURATION,
       });
     } else {
-      // fade out 사라짐
       opacity.value = withTiming(0, {
         duration: CONSTANTS.FADE_IN_DURATION,
       });
@@ -67,6 +64,7 @@ export default function UndoToast({ visible, onUndo, onDismiss }: UndoToastProps
       >
         <Text style={styles.label}>삭제됨</Text>
         <Text style={styles.separator}>·</Text>
+        <Ionicons name="arrow-undo" size={14} color={colors.accent} />
         <Text style={styles.undoText}>실행취소</Text>
       </Pressable>
     </Animated.View>
@@ -84,10 +82,12 @@ const styles = StyleSheet.create({
   toast: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceDark,
+    backgroundColor: 'rgba(30, 27, 38, 0.85)',
+    borderWidth: 1,
+    borderColor: colors.divider,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.lg,
     gap: spacing.sm,
     ...shadows.md,
   },
@@ -101,8 +101,8 @@ const styles = StyleSheet.create({
   },
   undoText: {
     ...typography.bodySm,
-    fontWeight: '600',
-    color: colors.accentStart,
+    fontFamily: 'Pretendard-SemiBold',
+    color: colors.accent,
   },
   pressed: {
     opacity: 0.8,

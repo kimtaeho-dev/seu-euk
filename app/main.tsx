@@ -1,6 +1,13 @@
 import { useEffect, useCallback } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import { usePhotos } from '../hooks/usePhotos';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import { useDeleteQueue } from '../hooks/useDeleteQueue';
@@ -10,8 +17,41 @@ import SwipeCard from '../components/SwipeCard';
 import ProgressHeader from '../components/ProgressHeader';
 import PhotoDate from '../components/PhotoDate';
 import UndoToast from '../components/UndoToast';
+import Logo from '../components/Logo';
 import { colors } from '../styles/theme';
 import type { SwipeDecision } from '../types';
+
+function BrandPulseLoader() {
+  const pulse = useSharedValue(0.6);
+
+  useEffect(() => {
+    pulse.value = withRepeat(
+      withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true,
+    );
+  }, [pulse]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: pulse.value,
+    transform: [{ scale: 0.9 + pulse.value * 0.1 }],
+  }));
+
+  return (
+    <Animated.View style={[loaderStyles.container, animatedStyle]}>
+      <Logo size={48} />
+    </Animated.View>
+  );
+}
+
+const loaderStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.backgroundDark,
+  },
+});
 
 export default function MainScreen() {
   const router = useRouter();
@@ -32,7 +72,6 @@ export default function MainScreen() {
 
   const handleSwipeComplete = useCallback(
     (decision: SwipeDecision) => {
-      // 스토어에서 직접 읽어 stale closure 방지
       const store = usePhotoStore.getState();
       const asset = store.assets[store.currentIndex];
       if (!asset) return;
@@ -43,7 +82,6 @@ export default function MainScreen() {
 
       const nextIndex = moveToNext();
 
-      // 세션 저장
       save({
         lastIndex: nextIndex,
         totalCount,
@@ -62,14 +100,12 @@ export default function MainScreen() {
   const handleUndo = useCallback(() => {
     const restored = undo();
     if (restored) {
-      // 이전 사진으로 복귀
       const store = usePhotoStore.getState();
       store.setCurrentIndex(Math.max(0, store.currentIndex - 1));
       swipe.resetPosition();
     }
   }, [undo, swipe]);
 
-  // 초기 로드
   useEffect(() => {
     const init = async () => {
       const savedSession = await restore();
@@ -79,7 +115,6 @@ export default function MainScreen() {
     init();
   }, []);
 
-  // 완료 체크: 사진이 없거나 모두 정리한 경우
   useEffect(() => {
     if (isLoading) return;
 
@@ -92,7 +127,6 @@ export default function MainScreen() {
     }
   }, [isComplete, isLoading, currentAsset, totalCount, router, flush]);
 
-  // 새 사진 전환 시 즉시 리셋
   useEffect(() => {
     if (currentAsset) {
       swipe.resetPosition();
@@ -100,11 +134,7 @@ export default function MainScreen() {
   }, [currentAsset?.id]);
 
   if (isLoading && !currentAsset) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.accentStart} />
-      </View>
-    );
+    return <BrandPulseLoader />;
   }
 
   if (!currentAsset) {
@@ -113,18 +143,11 @@ export default function MainScreen() {
 
   return (
     <View style={styles.container}>
-      {/* 진척도 헤더 */}
       <ProgressHeader current={currentIndex + 1} total={totalCount} />
-
-      {/* 스와이프 카드 */}
       <SwipeCard asset={currentAsset} nextAsset={nextAsset} swipe={swipe} />
-
-      {/* 날짜 표시 */}
       <View style={styles.dateContainer}>
         <PhotoDate creationTime={currentAsset.creationTime} />
       </View>
-
-      {/* Undo 토스트 */}
       <UndoToast
         visible={showUndoToast}
         onUndo={handleUndo}
@@ -138,12 +161,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.backgroundDark,
-  },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: colors.backgroundDark,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   dateContainer: {
     position: 'absolute',

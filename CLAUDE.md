@@ -15,6 +15,8 @@
 - **Media:** expo-media-library
 - **Haptics:** expo-haptics
 - **Storage:** @react-native-async-storage/async-storage
+- **SVG:** react-native-svg
+- **Font:** Pretendard (expo-font)
 
 ## Project Structure
 ```
@@ -32,7 +34,8 @@ seu-euk/
 │   ├── ProgressHeader.tsx   # 진척도 헤더
 │   ├── UndoToast.tsx        # Undo 토스트
 │   ├── PhotoDate.tsx        # 날짜 표시
-│   └── Button.tsx           # 공통 버튼
+│   ├── Button.tsx           # 공통 버튼
+│   └── Logo.tsx             # SVG 브랜드 로고
 ├── stores/
 │   ├── usePhotoStore.ts     # 사진 상태
 │   ├── useTrashStore.ts     # 휴지통 상태
@@ -68,7 +71,8 @@ seu-euk/
 - StyleSheet.create 사용
 - 애니메이션은 모두 Reanimated worklet (UI thread)
 - 하드코딩 금지 — 반드시 디자인 토큰(theme.ts) 및 상수(constants.ts) 참조
-- 색상: backgroundDark #0F0F14, keepGreen #4ADE80, deleteRed #F87171, accent #667EEA
+- 색상: backgroundDark #131118, keepGreen #6BCB97, deleteRed #E07070, accent #E8845C
+- 폰트: Pretendard (Regular, Medium, SemiBold, Bold)
 
 ## Development Phases
 1. Phase 0: 디자인 시스템 (styles/theme.ts)

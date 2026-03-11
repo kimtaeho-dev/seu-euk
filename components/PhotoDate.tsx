@@ -20,8 +20,11 @@ export default function PhotoDate({ creationTime, style }: PhotoDateProps) {
 const styles = StyleSheet.create({
   date: {
     ...typography.bodySm,
+    fontFamily: 'Pretendard-Medium',
     color: colors.textSecondary,
-    backgroundColor: colors.overlay,
+    backgroundColor: 'rgba(30, 27, 38, 0.7)',
+    borderWidth: 1,
+    borderColor: 'rgba(245,242,238,0.08)',
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.md,
     borderRadius: 9999,

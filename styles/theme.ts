@@ -2,43 +2,45 @@ import { TextStyle } from 'react-native';
 
 export const colors = {
   // 배경
-  backgroundDark: '#0F0F14',
-  backgroundLight: '#F8F9FA',
-  surfaceDark: '#1A1A24',
+  backgroundDark: '#131118',
+  backgroundLight: '#FAF9F7',
+  surfaceDark: '#1E1B26',
   surfaceLight: '#FFFFFF',
 
   // 액센트 (그라데이션)
-  accentStart: '#667EEA',
-  accentEnd: '#764BA2',
+  accentStart: '#E8845C',
+  accentEnd: '#D4648C',
+  accent: '#E8845C',
+  accentSoft: 'rgba(232, 132, 92, 0.15)',
 
   // 피드백
-  keepGreen: '#4ADE80',
-  keepGreenBg: 'rgba(74, 222, 128, 0.15)',
-  deleteRed: '#F87171',
-  deleteRedBg: 'rgba(248, 113, 113, 0.15)',
+  keepGreen: '#6BCB97',
+  keepGreenBg: 'rgba(107, 203, 151, 0.15)',
+  deleteRed: '#E07070',
+  deleteRedBg: 'rgba(224, 112, 112, 0.15)',
 
   // 텍스트 (다크 테마)
-  textPrimary: '#FFFFFF',
-  textSecondary: 'rgba(255,255,255,0.7)',
-  textTertiary: 'rgba(255,255,255,0.4)',
+  textPrimary: '#F5F2EE',
+  textSecondary: 'rgba(245,242,238,0.7)',
+  textTertiary: 'rgba(245,242,238,0.4)',
 
   // 텍스트 (라이트 테마)
-  textDarkPrimary: '#1A1A2E',
+  textDarkPrimary: '#2A2438',
   textDarkSecondary: '#6B7280',
 
   // 시스템
   overlay: 'rgba(0,0,0,0.5)',
-  divider: 'rgba(255,255,255,0.1)',
+  divider: 'rgba(245,242,238,0.1)',
 } as const;
 
 export const typography: Record<string, TextStyle> = {
-  displayLg: { fontSize: 48, fontWeight: '700', lineHeight: 56 },
-  displaySm: { fontSize: 32, fontWeight: '700', lineHeight: 40 },
-  headingLg: { fontSize: 24, fontWeight: '600', lineHeight: 32 },
-  headingSm: { fontSize: 20, fontWeight: '600', lineHeight: 28 },
-  bodyLg: { fontSize: 17, fontWeight: '400', lineHeight: 24 },
-  bodySm: { fontSize: 15, fontWeight: '400', lineHeight: 20 },
-  caption: { fontSize: 13, fontWeight: '400', lineHeight: 16 },
+  displayLg: { fontSize: 44, fontFamily: 'Pretendard-Bold', lineHeight: 52 },
+  displaySm: { fontSize: 30, fontFamily: 'Pretendard-Bold', lineHeight: 38 },
+  headingLg: { fontSize: 22, fontFamily: 'Pretendard-SemiBold', lineHeight: 30 },
+  headingSm: { fontSize: 18, fontFamily: 'Pretendard-SemiBold', lineHeight: 26 },
+  bodyLg: { fontSize: 16, fontFamily: 'Pretendard-Regular', lineHeight: 24 },
+  bodySm: { fontSize: 14, fontFamily: 'Pretendard-Regular', lineHeight: 20 },
+  caption: { fontSize: 12, fontFamily: 'Pretendard-Regular', lineHeight: 16 },
 } as const;
 
 export const spacing = {
