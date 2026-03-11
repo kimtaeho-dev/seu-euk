@@ -9,9 +9,10 @@ import { colors, typography, spacing, borderRadius } from '../styles/theme';
 interface ProgressHeaderProps {
   current: number;
   total: number;
+  onCounterPress?: () => void;
 }
 
-export default function ProgressHeader({ current, total }: ProgressHeaderProps) {
+export default function ProgressHeader({ current, total, onCounterPress }: ProgressHeaderProps) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const trashCount = useTrashStore((s) => s.trashItems.length);
@@ -35,11 +36,13 @@ export default function ProgressHeader({ current, total }: ProgressHeaderProps) 
       {/* 카운터 + 휴지통 */}
       <View style={styles.row}>
         <View style={styles.spacer} />
-        <Text style={styles.text}>
-          <Text style={styles.current}>{formattedCurrent}</Text>
-          <Text style={styles.separator}> / </Text>
-          <Text style={styles.total}>{formattedTotal}</Text>
-        </Text>
+        <Pressable onPress={onCounterPress} disabled={!onCounterPress}>
+          <Text style={styles.text}>
+            <Text style={styles.current}>{formattedCurrent}</Text>
+            <Text style={styles.separator}> / </Text>
+            <Text style={styles.total}>{formattedTotal}</Text>
+          </Text>
+        </Pressable>
         <Pressable
           style={styles.trashButton}
           onPress={() => router.push('/trash')}

@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, {
@@ -17,6 +17,7 @@ import SwipeCard from '../components/SwipeCard';
 import ProgressHeader from '../components/ProgressHeader';
 import PhotoDate from '../components/PhotoDate';
 import UndoToast from '../components/UndoToast';
+import JumpToDateSheet from '../components/JumpToDateSheet';
 import Logo from '../components/Logo';
 import { colors } from '../styles/theme';
 import type { SwipeDecision } from '../types';
@@ -69,6 +70,23 @@ export default function MainScreen() {
   const nextAsset = assets[currentIndex + 1] ?? undefined;
   const { restore, save } = useSession();
   const { enqueue, undo, showUndoToast, flush } = useDeleteQueue();
+  const [showJumpSheet, setShowJumpSheet] = useState(false);
+
+  const handleJump = useCallback(
+    async (targetIndex: number) => {
+      setShowJumpSheet(false);
+      await flush();
+      usePhotoStore.getState().reset();
+      await loadInitial(targetIndex);
+      save({
+        lastIndex: targetIndex,
+        totalCount,
+        deletedCount: 0,
+        lastUpdated: Date.now(),
+      });
+    },
+    [flush, loadInitial, save, totalCount],
+  );
 
   const handleSwipeComplete = useCallback(
     (decision: SwipeDecision) => {
@@ -143,7 +161,11 @@ export default function MainScreen() {
 
   return (
     <View style={styles.container}>
-      <ProgressHeader current={currentIndex + 1} total={totalCount} />
+      <ProgressHeader
+        current={currentIndex + 1}
+        total={totalCount}
+        onCounterPress={() => setShowJumpSheet(true)}
+      />
       <SwipeCard asset={currentAsset} nextAsset={nextAsset} swipe={swipe} />
       <View style={styles.dateContainer}>
         <PhotoDate creationTime={currentAsset.creationTime} />
@@ -152,6 +174,12 @@ export default function MainScreen() {
         visible={showUndoToast}
         onUndo={handleUndo}
         onDismiss={() => {}}
+      />
+      <JumpToDateSheet
+        visible={showJumpSheet}
+        onClose={() => setShowJumpSheet(false)}
+        onJump={handleJump}
+        currentPhotoDate={currentAsset?.creationTime}
       />
     </View>
   );
