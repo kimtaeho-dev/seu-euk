@@ -15,7 +15,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as MediaLibrary from 'expo-media-library';
 import { useTrashStore } from '../stores/useTrashStore';
-import { CONSTANTS } from '../utils/constants';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 import type { TrashItem } from '../types';
 
@@ -23,12 +22,6 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const NUM_COLUMNS = 3;
 const ITEM_GAP = 2;
 const ITEM_SIZE = (SCREEN_WIDTH - ITEM_GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
-
-function getRemainingDays(deletedAt: number): number {
-  const expiryMs = CONSTANTS.TRASH_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
-  const elapsed = Date.now() - deletedAt;
-  return Math.max(0, Math.ceil((expiryMs - elapsed) / (24 * 60 * 60 * 1000)));
-}
 
 export default function TrashScreen() {
   const router = useRouter();
@@ -95,8 +88,6 @@ export default function TrashScreen() {
 
   const renderItem = useCallback(
     ({ item }: { item: TrashItem }) => {
-      const remaining = getRemainingDays(item.deletedAt);
-
       return (
         <Pressable
           style={styles.gridItem}
@@ -106,9 +97,6 @@ export default function TrashScreen() {
             source={{ uri: item.asset.uri }}
             style={styles.thumbnail}
           />
-          <View style={styles.daysOverlay}>
-            <Text style={styles.daysText}>{remaining}일</Text>
-          </View>
           <View style={styles.restoreOverlay}>
             <Ionicons name="arrow-undo" size={16} color={colors.textPrimary} />
           </View>
@@ -237,20 +225,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     backgroundColor: colors.surfaceDark,
-  },
-  daysOverlay: {
-    position: 'absolute',
-    bottom: spacing.xs,
-    left: spacing.xs,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: borderRadius.sm,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
-  },
-  daysText: {
-    ...typography.caption,
-    color: colors.textPrimary,
-    fontSize: 11,
   },
   restoreOverlay: {
     position: 'absolute',

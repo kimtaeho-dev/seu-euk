@@ -13,7 +13,6 @@ interface TrashState {
   clearTrash: () => void;
   loadTrash: () => Promise<void>;
   saveTrash: () => Promise<void>;
-  removeExpired: () => void;
 }
 
 export const useTrashStore = create<TrashState>((set, get) => ({
@@ -51,8 +50,6 @@ export const useTrashStore = create<TrashState>((set, get) => ({
       if (raw) {
         const items: TrashItem[] = JSON.parse(raw);
         set({ trashItems: items, isLoaded: true });
-        // 로드 후 만료 항목 제거
-        get().removeExpired();
       } else {
         set({ isLoaded: true });
       }
@@ -73,18 +70,4 @@ export const useTrashStore = create<TrashState>((set, get) => ({
     }
   },
 
-  removeExpired: () => {
-    const expiryMs = CONSTANTS.TRASH_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
-    const now = Date.now();
-    set((state) => {
-      const filtered = state.trashItems.filter(
-        (item) => now - item.deletedAt < expiryMs,
-      );
-      if (filtered.length !== state.trashItems.length) {
-        return { trashItems: filtered };
-      }
-      return state;
-    });
-    get().saveTrash();
-  },
 }));

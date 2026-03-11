@@ -24,5 +24,4 @@ export const CONSTANTS = {
 
   // 휴지통
   TRASH_STORAGE_KEY: '@seu_euk_trash',
-  TRASH_EXPIRY_DAYS: 30,
 } as const;
