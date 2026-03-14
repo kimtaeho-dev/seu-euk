@@ -26,21 +26,11 @@ export async function getOldestPhotoYear(): Promise<number | null> {
   return new Date(asset.creationTime).getFullYear();
 }
 
-/** 특정 날짜 이후 첫 사진의 인덱스와 Asset 조회 */
+/** 특정 날짜 이후 첫 사진의 촬영 시간과 Asset 조회 */
 export async function findPhotoByDate(targetDate: Date): Promise<{
-  index: number;
+  creationTime: number | undefined;
   asset: MediaLibrary.Asset | null;
 }> {
-  // targetDate 이전의 사진 수 = 해당 시점의 인덱스
-  const beforeResult = await MediaLibrary.getAssetsAsync({
-    first: 0,
-    mediaType: MediaLibrary.MediaType.photo,
-    sortBy: [[MediaLibrary.SortBy.creationTime, true]],
-    createdBefore: targetDate,
-  });
-
-  const index = beforeResult.totalCount;
-
   // targetDate 이후 첫 사진 (미리보기용)
   const afterResult = await MediaLibrary.getAssetsAsync({
     first: 1,
@@ -49,8 +39,10 @@ export async function findPhotoByDate(targetDate: Date): Promise<{
     createdAfter: targetDate,
   });
 
+  const asset = afterResult.assets[0] ?? null;
+
   return {
-    index,
-    asset: afterResult.assets[0] ?? null,
+    creationTime: asset?.creationTime,
+    asset,
   };
 }

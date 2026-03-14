@@ -21,39 +21,52 @@ export function usePhotos() {
     removeAssetById,
   } = usePhotoStore();
 
-  /** 첫 페이지 로드 (오래된 순) */
+  /** 필터링된 사진 로드 (excludeIds 제외, afterCreationTime 이후) */
   const loadInitial = useCallback(
-    async (startIndex: number = 0) => {
+    async (excludeIds: Set<string>, afterCreationTime?: number) => {
       setIsLoading(true);
       try {
-        const result = await MediaLibrary.getAssetsAsync({
+        const queryOptions: MediaLibrary.AssetsOptions = {
           first: CONSTANTS.PAGE_SIZE,
           mediaType: MediaLibrary.MediaType.photo,
           sortBy: [[MediaLibrary.SortBy.creationTime, true]],
-        });
+        };
 
-        let allAssets = [...result.assets];
-        let cursor = result.endCursor;
-        let hasMore = result.hasNextPage;
-
-        // startIndex까지 필요한 만큼 추가 로드
-        while (allAssets.length <= startIndex && hasMore) {
-          const nextResult = await MediaLibrary.getAssetsAsync({
-            first: CONSTANTS.PAGE_SIZE,
-            after: cursor,
-            mediaType: MediaLibrary.MediaType.photo,
-            sortBy: [[MediaLibrary.SortBy.creationTime, true]],
-          });
-          allAssets = [...allAssets, ...nextResult.assets];
-          cursor = nextResult.endCursor;
-          hasMore = nextResult.hasNextPage;
+        if (afterCreationTime) {
+          queryOptions.createdAfter = afterCreationTime;
         }
 
-        setAssets(allAssets);
-        setTotalCount(result.totalCount);
+        let filtered: MediaLibrary.Asset[] = [];
+        let cursor: string | undefined;
+        let hasMore = true;
+        let rawTotalCount = 0;
+
+        // 필터링 루프: 충분한 사진이 모일 때까지 페이지 로드
+        while (filtered.length < CONSTANTS.PAGE_SIZE && hasMore) {
+          const result = await MediaLibrary.getAssetsAsync({
+            ...queryOptions,
+            after: cursor,
+          });
+
+          if (rawTotalCount === 0) {
+            rawTotalCount = result.totalCount;
+          }
+
+          const newFiltered = result.assets.filter(
+            (a) => !excludeIds.has(a.id),
+          );
+          filtered = [...filtered, ...newFiltered];
+          cursor = result.endCursor;
+          hasMore = result.hasNextPage;
+        }
+
+        const adjustedTotal = Math.max(0, rawTotalCount - excludeIds.size);
+
+        setAssets(filtered);
+        setTotalCount(adjustedTotal);
         setEndCursor(cursor);
         setHasNextPage(hasMore);
-        setCurrentIndex(Math.min(startIndex, allAssets.length - 1));
+        setCurrentIndex(0);
       } finally {
         setIsLoading(false);
       }
@@ -68,53 +81,69 @@ export function usePhotos() {
     ],
   );
 
-  /** 다음 페이지 프리로드 */
-  const loadMore = useCallback(async () => {
-    if (!hasNextPage || isLoading || !endCursor) return;
+  /** 다음 페이지 프리로드 (필터링 포함) */
+  const loadMore = useCallback(
+    async (excludeIds: Set<string>) => {
+      if (!hasNextPage || isLoading || !endCursor) return;
 
-    setIsLoading(true);
-    try {
-      const result = await MediaLibrary.getAssetsAsync({
-        first: CONSTANTS.PAGE_SIZE,
-        after: endCursor,
-        mediaType: MediaLibrary.MediaType.photo,
-        sortBy: [[MediaLibrary.SortBy.creationTime, true]],
-      });
+      setIsLoading(true);
+      try {
+        let filtered: MediaLibrary.Asset[] = [];
+        let cursor: string | undefined = endCursor;
+        let hasMore = true;
 
-      appendAssets(result.assets);
-      setEndCursor(result.endCursor);
-      setHasNextPage(result.hasNextPage);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [hasNextPage, isLoading, endCursor, appendAssets, setEndCursor, setHasNextPage, setIsLoading]);
+        while (filtered.length < CONSTANTS.PAGE_SIZE && hasMore) {
+          const result = await MediaLibrary.getAssetsAsync({
+            first: CONSTANTS.PAGE_SIZE,
+            after: cursor,
+            mediaType: MediaLibrary.MediaType.photo,
+            sortBy: [[MediaLibrary.SortBy.creationTime, true]],
+          });
+
+          const newFiltered = result.assets.filter(
+            (a) => !excludeIds.has(a.id),
+          );
+          filtered = [...filtered, ...newFiltered];
+          cursor = result.endCursor;
+          hasMore = result.hasNextPage;
+        }
+
+        appendAssets(filtered);
+        setEndCursor(cursor);
+        setHasNextPage(hasMore);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [hasNextPage, isLoading, endCursor, appendAssets, setEndCursor, setHasNextPage, setIsLoading],
+  );
 
   /** 남은 사진 수 체크 후 프리로드 트리거 */
-  const checkAndPreload = useCallback(() => {
-    const remaining = assets.length - currentIndex;
-    if (remaining <= CONSTANTS.PRELOAD_THRESHOLD && hasNextPage) {
-      loadMore();
-    }
-  }, [assets.length, currentIndex, hasNextPage, loadMore]);
+  const checkAndPreload = useCallback(
+    (excludeIds: Set<string>) => {
+      const remaining = assets.length - currentIndex;
+      if (remaining <= CONSTANTS.PRELOAD_THRESHOLD && hasNextPage) {
+        loadMore(excludeIds);
+      }
+    },
+    [assets.length, currentIndex, hasNextPage, loadMore],
+  );
 
   const moveCount = useRef(0);
 
   /** 다음 사진으로 이동 */
   const moveToNext = useCallback(() => {
-    // flushPrevious()가 currentIndex를 조정할 수 있으므로 store에서 직접 읽기
     const current = usePhotoStore.getState().currentIndex;
     const nextIndex = current + 1;
     setCurrentIndex(nextIndex);
-    checkAndPreload();
 
-    // 주기적으로 지나간 assets 정리
     moveCount.current += 1;
     if (moveCount.current % CONSTANTS.TRIM_INTERVAL === 0) {
       usePhotoStore.getState().trimPastAssets();
     }
 
     return nextIndex;
-  }, [setCurrentIndex, checkAndPreload]);
+  }, [setCurrentIndex]);
 
   /** 사진 삭제 (미디어 라이브러리에서) */
   const deleteAsset = useCallback(
@@ -150,5 +179,6 @@ export function usePhotos() {
     loadMore,
     moveToNext,
     deleteAsset,
+    checkAndPreload,
   };
 }

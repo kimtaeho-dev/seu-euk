@@ -12,9 +12,12 @@ export interface TrashItem {
 /** 세션 데이터 */
 export interface SessionData {
   lastIndex: number;
+  lastAssetId?: string;
+  lastCreationTime?: number;
   totalCount: number;
   lastUpdated: number;
   deletedCount: number;
+  keptCount?: number;
 }
 
 /** 스와이프 방향 */

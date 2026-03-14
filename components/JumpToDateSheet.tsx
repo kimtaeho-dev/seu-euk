@@ -23,7 +23,7 @@ import { getOldestPhotoYear, findPhotoByDate } from '../utils/mediaQuery';
 interface JumpToDateSheetProps {
   visible: boolean;
   onClose: () => void;
-  onJump: (targetIndex: number) => void;
+  onJump: (targetCreationTime?: number) => void;
   currentPhotoDate?: number;
 }
 
@@ -47,7 +47,7 @@ export default function JumpToDateSheet({
 
   const [previewAsset, setPreviewAsset] = useState<MediaLibrary.Asset | null>(null);
   const [previewUri, setPreviewUri] = useState<string | null>(null);
-  const [previewIndex, setPreviewIndex] = useState<number>(0);
+  const [previewCreationTime, setPreviewCreationTime] = useState<number | undefined>();
   const [previewDate, setPreviewDate] = useState<Date | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [isLoadingYears, setIsLoadingYears] = useState(false);
@@ -103,6 +103,7 @@ export default function JumpToDateSheet({
       setPreviewAsset(null);
       setPreviewUri(null);
       setPreviewDate(null);
+      setPreviewCreationTime(undefined);
     }
   }, [visible, overlayOpacity, translateY]);
 
@@ -115,12 +116,13 @@ export default function JumpToDateSheet({
       setPreviewAsset(null);
       setPreviewUri(null);
       setPreviewDate(null);
+      setPreviewCreationTime(undefined);
 
       try {
         const targetDate = new Date(selectedYear, selectedMonth, 1);
         const result = await findPhotoByDate(targetDate);
 
-        setPreviewIndex(result.index);
+        setPreviewCreationTime(result.creationTime);
         setPreviewAsset(result.asset);
         if (result.asset) {
           setPreviewDate(new Date(result.asset.creationTime));
@@ -140,6 +142,7 @@ export default function JumpToDateSheet({
     setSelectedMonth(null);
     setPreviewAsset(null);
     setPreviewDate(null);
+    setPreviewCreationTime(undefined);
   }, []);
 
   const handleMonthPress = useCallback((monthIndex: number) => {
@@ -147,11 +150,11 @@ export default function JumpToDateSheet({
   }, []);
 
   const handleJump = useCallback(() => {
-    onJump(previewIndex);
-  }, [onJump, previewIndex]);
+    onJump(previewCreationTime);
+  }, [onJump, previewCreationTime]);
 
   const handleResetToStart = useCallback(() => {
-    onJump(0);
+    onJump(undefined);
   }, [onJump]);
 
   const overlayStyle = useAnimatedStyle(() => ({
@@ -271,7 +274,7 @@ export default function JumpToDateSheet({
                           : ''}
                       </Text>
                       <Text style={styles.previewIndex}>
-                        {(previewIndex + 1).toLocaleString()}번째 사진부터 시작
+                        이 사진부터 정리 시작
                       </Text>
                     </View>
                   </View>

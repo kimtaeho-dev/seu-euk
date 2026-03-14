@@ -14,7 +14,9 @@ import { usePhotos } from '../hooks/usePhotos';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import { useDeleteQueue } from '../hooks/useDeleteQueue';
 import { useSession } from '../hooks/useSession';
+import { useSortedAlbum } from '../hooks/useSortedAlbum';
 import { usePhotoStore } from '../stores/usePhotoStore';
+import { useTrashStore } from '../stores/useTrashStore';
 import { CONSTANTS } from '../utils/constants';
 import { findPhotoByDate } from '../utils/mediaQuery';
 import SwipeCard from '../components/SwipeCard';
@@ -69,23 +71,31 @@ export default function MainScreen() {
     isComplete,
     loadInitial,
     moveToNext,
+    checkAndPreload,
   } = usePhotos();
 
   const nextAsset = assets[currentIndex + 1] ?? undefined;
   const { restore, save } = useSession();
   const { enqueue, undo, showUndoToast, flush } = useDeleteQueue();
+  const sortedAlbum = useSortedAlbum();
   const [showJumpSheet, setShowJumpSheet] = useState(false);
 
+  // excludeIds를 ref로 유지하여 loadMore/checkAndPreload에서 재사용
+  const excludeIdsRef = useRef<Set<string>>(new Set());
+  const keptCountRef = useRef(0);
+
   const handleJump = useCallback(
-    async (targetIndex: number) => {
+    async (targetCreationTime?: number) => {
       setShowJumpSheet(false);
       await flush();
       usePhotoStore.getState().reset();
-      await loadInitial(targetIndex);
+      await loadInitial(excludeIdsRef.current, targetCreationTime);
       save({
-        lastIndex: targetIndex,
+        lastIndex: 0,
+        lastCreationTime: targetCreationTime,
         totalCount,
         deletedCount: 0,
+        keptCount: keptCountRef.current,
         lastUpdated: Date.now(),
       });
     },
@@ -100,18 +110,27 @@ export default function MainScreen() {
 
       if (decision === 'delete') {
         enqueue(asset);
+      } else if (decision === 'keep') {
+        sortedAlbum.addToSorted(asset);
+        // keep한 asset도 excludeIds에 추가 (다음 loadMore에서 필터링)
+        excludeIdsRef.current.add(asset.id);
+        keptCountRef.current += 1;
       }
 
       const nextIndex = moveToNext();
+      checkAndPreload(excludeIdsRef.current);
 
       save({
         lastIndex: nextIndex,
+        lastAssetId: asset.id,
+        lastCreationTime: asset.creationTime,
         totalCount,
         deletedCount: usePhotoStore.getState().deletedCount,
+        keptCount: keptCountRef.current,
         lastUpdated: Date.now(),
       });
     },
-    [enqueue, moveToNext, save, totalCount],
+    [enqueue, moveToNext, checkAndPreload, save, totalCount, sortedAlbum],
   );
 
   const swipe = useSwipeGesture({
@@ -130,9 +149,26 @@ export default function MainScreen() {
 
   useEffect(() => {
     const init = async () => {
+      // 1. 앨범 ID Set 로드
+      const sortedIds = await sortedAlbum.initialize();
+
+      // 2. 휴지통 ID Set 합산
+      const trashIds = new Set(
+        useTrashStore.getState().trashItems.map((t) => t.asset.id),
+      );
+      const excludeIds = new Set([...sortedIds, ...trashIds]);
+      excludeIdsRef.current = excludeIds;
+      keptCountRef.current = sortedIds.size;
+
+      // 3. 세션 복원
       const savedSession = await restore();
-      if (savedSession) {
-        await loadInitial(savedSession.lastIndex);
+
+      if (savedSession?.lastCreationTime) {
+        // creationTime 기반 세션 복원
+        await loadInitial(excludeIds, savedSession.lastCreationTime);
+        if (savedSession.keptCount) {
+          keptCountRef.current = savedSession.keptCount;
+        }
         return;
       }
 
@@ -144,11 +180,12 @@ export default function MainScreen() {
         await AsyncStorage.removeItem(CONSTANTS.SELECTED_START_YEAR_KEY);
         const targetDate = new Date(Number(selectedYear), 0, 1);
         const result = await findPhotoByDate(targetDate);
-        await loadInitial(result.index);
+        await loadInitial(excludeIds, result.creationTime);
         return;
       }
 
-      await loadInitial(0);
+      // 처음부터 시작
+      await loadInitial(excludeIds);
     };
     init();
   }, []);
@@ -157,13 +194,14 @@ export default function MainScreen() {
     if (isLoading) return;
 
     if (isComplete || (!currentAsset && totalCount > 0)) {
+      sortedAlbum.forceFlush();
       flush().then(() => {
         router.replace('/complete');
       });
     } else if (!currentAsset && totalCount === 0) {
       router.replace('/empty');
     }
-  }, [isComplete, isLoading, currentAsset, totalCount, router, flush]);
+  }, [isComplete, isLoading, currentAsset, totalCount, router, flush, sortedAlbum]);
 
   // 다음 N장 이미지 프리페치
   const prefetchedRef = useRef(new Set<string>());

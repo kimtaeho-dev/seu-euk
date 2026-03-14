@@ -8,6 +8,7 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useDeleteQueue } from '../hooks/useDeleteQueue';
 import { useSession } from '../hooks/useSession';
+import { useSortedAlbum } from '../hooks/useSortedAlbum';
 import { useTrashStore } from '../stores/useTrashStore';
 import { colors } from '../styles/theme';
 
@@ -16,6 +17,7 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const { cancel } = useDeleteQueue();
   const { saveImmediate, session } = useSession();
+  const { forceFlush: flushSortedAlbum } = useSortedAlbum();
   const appState = useRef(AppState.currentState);
   const loadTrash = useTrashStore((s) => s.loadTrash);
 
@@ -43,8 +45,9 @@ export default function RootLayout() {
         appState.current === 'active' &&
         (nextState === 'background' || nextState === 'inactive')
       ) {
-        // 앱 이탈 시: 큐 취소 + 세션 즉시 저장
+        // 앱 이탈 시: 큐 취소 + 앨범 flush + 세션 즉시 저장
         cancel();
+        flushSortedAlbum();
         if (session) {
           saveImmediate(session);
         }
@@ -53,7 +56,7 @@ export default function RootLayout() {
     });
 
     return () => sub.remove();
-  }, [cancel, saveImmediate, session]);
+  }, [cancel, flushSortedAlbum, saveImmediate, session]);
 
   if (!fontsLoaded) {
     return null;

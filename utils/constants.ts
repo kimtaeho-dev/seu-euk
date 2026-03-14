@@ -34,4 +34,9 @@ export const CONSTANTS = {
   TRIM_INTERVAL: 50,
   SESSION_DEBOUNCE_MS: 1000,
   TRASH_DEBOUNCE_MS: 500,
+
+  // 정리 완료 앨범
+  SORTED_ALBUM_NAME: '스윽 정리 완료',
+  KEEP_DEBOUNCE_MS: 500,
+  SORTED_ALBUM_BATCH: 500,
 } as const;
