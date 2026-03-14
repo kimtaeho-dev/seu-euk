@@ -16,7 +16,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { Asset } from 'expo-media-library';
+import * as MediaLibrary from 'expo-media-library';
 import { colors, typography, spacing, borderRadius, shadows } from '../styles/theme';
 import { getOldestPhotoYear, findPhotoByDate } from '../utils/mediaQuery';
 
@@ -45,7 +45,8 @@ export default function JumpToDateSheet({
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [currentYear, setCurrentYear] = useState<number | null>(null);
 
-  const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
+  const [previewAsset, setPreviewAsset] = useState<MediaLibrary.Asset | null>(null);
+  const [previewUri, setPreviewUri] = useState<string | null>(null);
   const [previewIndex, setPreviewIndex] = useState<number>(0);
   const [previewDate, setPreviewDate] = useState<Date | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
@@ -100,6 +101,7 @@ export default function JumpToDateSheet({
       setSelectedYear(null);
       setSelectedMonth(null);
       setPreviewAsset(null);
+      setPreviewUri(null);
       setPreviewDate(null);
     }
   }, [visible, overlayOpacity, translateY]);
@@ -111,6 +113,7 @@ export default function JumpToDateSheet({
     const loadPreview = async () => {
       setIsLoadingPreview(true);
       setPreviewAsset(null);
+      setPreviewUri(null);
       setPreviewDate(null);
 
       try {
@@ -121,6 +124,8 @@ export default function JumpToDateSheet({
         setPreviewAsset(result.asset);
         if (result.asset) {
           setPreviewDate(new Date(result.asset.creationTime));
+          const info = await MediaLibrary.getAssetInfoAsync(result.asset.id);
+          setPreviewUri(info.localUri ?? result.asset.uri);
         }
       } finally {
         setIsLoadingPreview(false);
@@ -256,7 +261,7 @@ export default function JumpToDateSheet({
                 ) : previewAsset ? (
                   <View style={styles.previewCard}>
                     <Image
-                      source={{ uri: previewAsset.uri }}
+                      source={{ uri: previewUri ?? undefined }}
                       style={styles.thumbnail}
                     />
                     <View style={styles.previewInfo}>
