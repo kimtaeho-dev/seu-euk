@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { Asset } from 'expo-media-library';
+import { CONSTANTS } from '../utils/constants';
 
 interface PhotoState {
   /** 로드된 사진 목록 */
@@ -38,6 +39,7 @@ interface PhotoState {
   setLastDeletedAsset: (asset: Asset | null) => void;
   setShowUndoToast: (show: boolean) => void;
   removeAssetById: (id: string) => void;
+  trimPastAssets: () => void;
   reset: () => void;
 }
 
@@ -82,6 +84,15 @@ export const usePhotoStore = create<PhotoState>((set) => ({
       return {
         assets: newAssets,
         currentIndex: shouldAdjust ? state.currentIndex - 1 : state.currentIndex,
+      };
+    }),
+  trimPastAssets: () =>
+    set((state) => {
+      const trimEnd = state.currentIndex - CONSTANTS.WINDOW_KEEP_BEHIND;
+      if (trimEnd <= 0) return state;
+      return {
+        assets: state.assets.slice(trimEnd),
+        currentIndex: state.currentIndex - trimEnd,
       };
     }),
   reset: () => set(initialState),

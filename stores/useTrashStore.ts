@@ -4,6 +4,8 @@ import type { Asset } from 'expo-media-library';
 import type { TrashItem } from '../types';
 import { CONSTANTS } from '../utils/constants';
 
+let trashDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
 interface TrashState {
   trashItems: TrashItem[];
   isLoaded: boolean;
@@ -29,7 +31,14 @@ export const useTrashStore = create<TrashState>((set, get) => ({
         trashItems: [...state.trashItems, { asset, deletedAt: Date.now() }],
       };
     });
-    get().saveTrash();
+    // 디바운싱된 저장
+    if (trashDebounceTimer) {
+      clearTimeout(trashDebounceTimer);
+    }
+    trashDebounceTimer = setTimeout(() => {
+      get().saveTrash();
+      trashDebounceTimer = null;
+    }, CONSTANTS.TRASH_DEBOUNCE_MS);
   },
 
   removeFromTrash: (id) => {

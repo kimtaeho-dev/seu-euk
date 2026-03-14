@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import * as MediaLibrary from 'expo-media-library';
 import { usePhotoStore } from '../stores/usePhotoStore';
 import { CONSTANTS } from '../utils/constants';
@@ -97,6 +97,8 @@ export function usePhotos() {
     }
   }, [assets.length, currentIndex, hasNextPage, loadMore]);
 
+  const moveCount = useRef(0);
+
   /** 다음 사진으로 이동 */
   const moveToNext = useCallback(() => {
     // flushPrevious()가 currentIndex를 조정할 수 있으므로 store에서 직접 읽기
@@ -104,6 +106,13 @@ export function usePhotos() {
     const nextIndex = current + 1;
     setCurrentIndex(nextIndex);
     checkAndPreload();
+
+    // 주기적으로 지나간 assets 정리
+    moveCount.current += 1;
+    if (moveCount.current % CONSTANTS.TRIM_INTERVAL === 0) {
+      usePhotoStore.getState().trimPastAssets();
+    }
+
     return nextIndex;
   }, [setCurrentIndex, checkAndPreload]);
 

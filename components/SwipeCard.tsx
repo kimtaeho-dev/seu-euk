@@ -77,11 +77,13 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
             style={styles.blurBackground}
             contentFit="cover"
             blurRadius={40}
+            recyclingKey={`next-blur-${displayNextAsset.id}`}
           />
           <Image
             source={{ uri: displayNextAsset.uri }}
             style={styles.nextImage}
             contentFit="contain"
+            recyclingKey={`next-${displayNextAsset.id}`}
           />
         </View>
       )}
@@ -101,6 +103,7 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
                 style={[styles.blurBackground, { opacity: imageReady ? 1 : 0 }]}
                 contentFit="cover"
                 blurRadius={40}
+                recyclingKey={`blur-${asset.id}`}
               />
               <Image
                 key={retryKey}
@@ -109,6 +112,7 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
                 contentFit="contain"
                 onLoad={handleLoadEnd}
                 onError={handleError}
+                recyclingKey={asset.id}
               />
               {/* 비네팅 오버레이 */}
               <LinearGradient

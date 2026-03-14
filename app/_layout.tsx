@@ -15,7 +15,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const { cancel } = useDeleteQueue();
-  const { save, session } = useSession();
+  const { saveImmediate, session } = useSession();
   const appState = useRef(AppState.currentState);
   const loadTrash = useTrashStore((s) => s.loadTrash);
 
@@ -43,17 +43,17 @@ export default function RootLayout() {
         appState.current === 'active' &&
         (nextState === 'background' || nextState === 'inactive')
       ) {
-        // 앱 이탈 시: 큐 취소 + 세션 저장
+        // 앱 이탈 시: 큐 취소 + 세션 즉시 저장
         cancel();
         if (session) {
-          save(session);
+          saveImmediate(session);
         }
       }
       appState.current = nextState;
     });
 
     return () => sub.remove();
-  }, [cancel, save, session]);
+  }, [cancel, saveImmediate, session]);
 
   if (!fontsLoaded) {
     return null;

@@ -27,4 +27,10 @@ export const CONSTANTS = {
 
   // 연도 선택
   SELECTED_START_YEAR_KEY: '@seu_euk_selected_start_year',
+
+  // 메모리 최적화
+  WINDOW_KEEP_BEHIND: 5,
+  TRIM_INTERVAL: 50,
+  SESSION_DEBOUNCE_MS: 1000,
+  TRASH_DEBOUNCE_MS: 500,
 } as const;
