@@ -35,18 +35,19 @@ export default function ProgressHeader({ current, total, onCounterPress }: Progr
 
       {/* 카운터 + 휴지통 */}
       <View style={styles.row}>
-        <View style={styles.spacer} />
         <Pressable
+          style={styles.calendarButton}
           onPress={onCounterPress}
           disabled={!onCounterPress}
-          style={styles.counterButton}
         >
+          <Ionicons name="calendar-outline" size={20} color={colors.accent} />
+        </Pressable>
+        <Pressable onPress={onCounterPress} disabled={!onCounterPress}>
           <Text style={styles.text}>
             <Text style={styles.current}>{formattedCurrent}</Text>
             <Text style={styles.separator}> / </Text>
             <Text style={styles.total}>{formattedTotal}</Text>
           </Text>
-          <Ionicons name="calendar-outline" size={14} color={colors.textTertiary} />
         </Pressable>
         <Pressable
           style={styles.trashButton}
@@ -94,13 +95,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.base,
   },
-  counterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  spacer: {
+  calendarButton: {
     width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   text: {
     ...typography.caption,
