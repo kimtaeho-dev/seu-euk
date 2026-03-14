@@ -17,6 +17,7 @@ export const CONSTANTS = {
   PAGE_SIZE: 100,
   PRELOAD_THRESHOLD: 20,
   IMAGE_LOAD_RETRY: 3,
+  IMAGE_PREFETCH_COUNT: 5,
 
   // 저장소
   SESSION_STORAGE_KEY: '@seu_euk_session',

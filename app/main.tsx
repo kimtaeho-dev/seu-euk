@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Image } from 'expo-image';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -163,6 +164,23 @@ export default function MainScreen() {
       router.replace('/empty');
     }
   }, [isComplete, isLoading, currentAsset, totalCount, router, flush]);
+
+  // 다음 N장 이미지 프리페치
+  const prefetchedRef = useRef(new Set<string>());
+  useEffect(() => {
+    const upcoming = assets.slice(
+      currentIndex + 1,
+      currentIndex + 1 + CONSTANTS.IMAGE_PREFETCH_COUNT,
+    );
+    const uris = upcoming
+      .map((a) => a.uri)
+      .filter((uri) => !prefetchedRef.current.has(uri));
+
+    if (uris.length > 0) {
+      uris.forEach((uri) => prefetchedRef.current.add(uri));
+      Image.prefetch(uris);
+    }
+  }, [assets, currentIndex]);
 
   useEffect(() => {
     if (currentAsset) {
