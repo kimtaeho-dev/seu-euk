@@ -42,13 +42,11 @@ export default function ProgressHeader({ current, total, onCounterPress }: Progr
         >
           <Ionicons name="calendar-outline" size={20} color={colors.accent} />
         </Pressable>
-        <Pressable onPress={onCounterPress} disabled={!onCounterPress}>
-          <Text style={styles.text}>
-            <Text style={styles.current}>{formattedCurrent}</Text>
-            <Text style={styles.separator}> / </Text>
-            <Text style={styles.total}>{formattedTotal}</Text>
-          </Text>
-        </Pressable>
+        <Text style={styles.text}>
+          <Text style={styles.current}>{formattedCurrent}</Text>
+          <Text style={styles.separator}> / </Text>
+          <Text style={styles.total}>{formattedTotal}</Text>
+        </Text>
         <Pressable
           style={styles.trashButton}
           onPress={() => router.push('/trash')}
