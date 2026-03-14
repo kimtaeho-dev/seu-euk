@@ -1,28 +1,29 @@
 import * as MediaLibrary from 'expo-media-library';
 
-/** 사진 라이브러리의 최소/최대 촬영일 조회 */
-export async function getPhotoDateRange(): Promise<{ oldest: Date; newest: Date } | null> {
-  const [oldestResult, newestResult] = await Promise.all([
-    MediaLibrary.getAssetsAsync({
-      first: 1,
-      mediaType: MediaLibrary.MediaType.photo,
-      sortBy: [MediaLibrary.SortBy.creationTime], // ASC → 가장 오래된 것
-    }),
-    MediaLibrary.getAssetsAsync({
-      first: 1,
-      mediaType: MediaLibrary.MediaType.photo,
-      sortBy: [[MediaLibrary.SortBy.creationTime, false]], // DESC → 가장 최근 것
-    }),
-  ]);
+/** 사진 라이브러리의 가장 오래된 촬영 연도 조회 */
+export async function getOldestPhotoYear(): Promise<number | null> {
+  // 오래된 순 정렬 (ASC) — 첫 번째가 가장 오래된 사진
+  const result = await MediaLibrary.getAssetsAsync({
+    first: 1,
+    mediaType: MediaLibrary.MediaType.photo,
+    sortBy: [[MediaLibrary.SortBy.creationTime, true]],
+  });
 
-  if (oldestResult.assets.length === 0 || newestResult.assets.length === 0) {
+  if (result.assets.length === 0) {
     return null;
   }
 
-  return {
-    oldest: new Date(oldestResult.assets[0].creationTime),
-    newest: new Date(newestResult.assets[0].creationTime),
-  };
+  const asset = result.assets[0];
+  console.log('[mediaQuery] oldest asset:', {
+    id: asset.id,
+    filename: asset.filename,
+    creationTime: asset.creationTime,
+    asDate: new Date(asset.creationTime).toISOString(),
+    year: new Date(asset.creationTime).getFullYear(),
+    totalCount: result.totalCount,
+  });
+
+  return new Date(asset.creationTime).getFullYear();
 }
 
 /** 특정 날짜 이후 첫 사진의 인덱스와 Asset 조회 */
@@ -34,7 +35,7 @@ export async function findPhotoByDate(targetDate: Date): Promise<{
   const beforeResult = await MediaLibrary.getAssetsAsync({
     first: 0,
     mediaType: MediaLibrary.MediaType.photo,
-    sortBy: [MediaLibrary.SortBy.creationTime],
+    sortBy: [[MediaLibrary.SortBy.creationTime, true]],
     createdBefore: targetDate,
   });
 
@@ -44,7 +45,7 @@ export async function findPhotoByDate(targetDate: Date): Promise<{
   const afterResult = await MediaLibrary.getAssetsAsync({
     first: 1,
     mediaType: MediaLibrary.MediaType.photo,
-    sortBy: [MediaLibrary.SortBy.creationTime],
+    sortBy: [[MediaLibrary.SortBy.creationTime, true]],
     createdAfter: targetDate,
   });
 

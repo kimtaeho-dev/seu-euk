@@ -29,7 +29,7 @@ export function usePhotos() {
         const result = await MediaLibrary.getAssetsAsync({
           first: CONSTANTS.PAGE_SIZE,
           mediaType: MediaLibrary.MediaType.photo,
-          sortBy: [MediaLibrary.SortBy.creationTime],
+          sortBy: [[MediaLibrary.SortBy.creationTime, true]],
         });
 
         let allAssets = [...result.assets];
@@ -42,7 +42,7 @@ export function usePhotos() {
             first: CONSTANTS.PAGE_SIZE,
             after: cursor,
             mediaType: MediaLibrary.MediaType.photo,
-            sortBy: [MediaLibrary.SortBy.creationTime],
+            sortBy: [[MediaLibrary.SortBy.creationTime, true]],
           });
           allAssets = [...allAssets, ...nextResult.assets];
           cursor = nextResult.endCursor;
@@ -78,7 +78,7 @@ export function usePhotos() {
         first: CONSTANTS.PAGE_SIZE,
         after: endCursor,
         mediaType: MediaLibrary.MediaType.photo,
-        sortBy: [MediaLibrary.SortBy.creationTime],
+        sortBy: [[MediaLibrary.SortBy.creationTime, true]],
       });
 
       appendAssets(result.assets);

@@ -18,7 +18,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Asset } from 'expo-media-library';
 import { colors, typography, spacing, borderRadius, shadows } from '../styles/theme';
-import { getPhotoDateRange, findPhotoByDate } from '../utils/mediaQuery';
+import { getOldestPhotoYear, findPhotoByDate } from '../utils/mediaQuery';
 
 interface JumpToDateSheetProps {
   visible: boolean;
@@ -65,12 +65,11 @@ export default function JumpToDateSheet({
     const loadDateRange = async () => {
       setIsLoadingYears(true);
       try {
-        const range = await getPhotoDateRange();
-        if (range) {
-          const startYear = range.oldest.getFullYear();
-          const endYear = range.newest.getFullYear();
+        const oldestYear = await getOldestPhotoYear();
+        if (oldestYear !== null) {
+          const currentYear = new Date().getFullYear();
           const yearList: number[] = [];
-          for (let y = startYear; y <= endYear; y++) {
+          for (let y = oldestYear; y <= currentYear; y++) {
             yearList.push(y);
           }
           setYears(yearList);

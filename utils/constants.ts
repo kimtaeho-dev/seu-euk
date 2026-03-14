@@ -24,4 +24,7 @@ export const CONSTANTS = {
 
   // 휴지통
   TRASH_STORAGE_KEY: '@seu_euk_trash',
+
+  // 연도 선택
+  SELECTED_START_YEAR_KEY: '@seu_euk_selected_start_year',
 } as const;

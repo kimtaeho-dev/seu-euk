@@ -61,8 +61,8 @@ export default function SplashScreen() {
 
   const handleStart = useCallback(async () => {
     await AsyncStorage.setItem(CONSTANTS.FIRST_LAUNCH_KEY, 'true');
-    navigateByPermission();
-  }, [navigateByPermission]);
+    router.replace('/year-select');
+  }, [router]);
 
   const logoStyle = useAnimatedStyle(() => ({
     opacity: logoOpacity.value,

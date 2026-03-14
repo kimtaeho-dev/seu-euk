@@ -8,11 +8,14 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { usePhotos } from '../hooks/usePhotos';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import { useDeleteQueue } from '../hooks/useDeleteQueue';
 import { useSession } from '../hooks/useSession';
 import { usePhotoStore } from '../stores/usePhotoStore';
+import { CONSTANTS } from '../utils/constants';
+import { findPhotoByDate } from '../utils/mediaQuery';
 import SwipeCard from '../components/SwipeCard';
 import ProgressHeader from '../components/ProgressHeader';
 import PhotoDate from '../components/PhotoDate';
@@ -127,8 +130,24 @@ export default function MainScreen() {
   useEffect(() => {
     const init = async () => {
       const savedSession = await restore();
-      const startIndex = savedSession ? savedSession.lastIndex : 0;
-      await loadInitial(startIndex);
+      if (savedSession) {
+        await loadInitial(savedSession.lastIndex);
+        return;
+      }
+
+      // 세션 없을 때: 연도 선택 확인 (1회성)
+      const selectedYear = await AsyncStorage.getItem(
+        CONSTANTS.SELECTED_START_YEAR_KEY,
+      );
+      if (selectedYear) {
+        await AsyncStorage.removeItem(CONSTANTS.SELECTED_START_YEAR_KEY);
+        const targetDate = new Date(Number(selectedYear), 0, 1);
+        const result = await findPhotoByDate(targetDate);
+        await loadInitial(result.index);
+        return;
+      }
+
+      await loadInitial(0);
     };
     init();
   }, []);

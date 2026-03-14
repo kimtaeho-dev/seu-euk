@@ -75,6 +75,7 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="index" />
+          <Stack.Screen name="year-select" options={{ animation: 'fade' }} />
           <Stack.Screen name="permission" options={{ animation: 'fade' }} />
           <Stack.Screen name="main" options={{ animation: 'slide_from_bottom' }} />
           <Stack.Screen name="complete" options={{ animation: 'fade' }} />
