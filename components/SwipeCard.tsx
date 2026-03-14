@@ -120,25 +120,26 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
             </>
           )}
 
-          {/* 유지 피드백 — 텍스트 필 */}
-          <Animated.View
-            style={[styles.feedbackPill, styles.keepPill, keepIndicatorStyle]}
-            pointerEvents="none"
-          >
-            <Ionicons name="checkmark" size={20} color={colors.keepGreen} />
-            <Text style={[styles.feedbackText, { color: colors.keepGreen }]}>유지</Text>
-          </Animated.View>
-
-          {/* 삭제 피드백 — 텍스트 필 */}
-          <Animated.View
-            style={[styles.feedbackPill, styles.deletePill, deleteIndicatorStyle]}
-            pointerEvents="none"
-          >
-            <Ionicons name="trash-outline" size={20} color={colors.deleteRed} />
-            <Text style={[styles.feedbackText, { color: colors.deleteRed }]}>삭제</Text>
-          </Animated.View>
         </Animated.View>
       </GestureDetector>
+
+      {/* 유지 피드백 — 정중앙 고정 */}
+      <Animated.View
+        style={[styles.feedbackPill, keepIndicatorStyle]}
+        pointerEvents="none"
+      >
+        <Ionicons name="checkmark" size={20} color={colors.keepGreen} />
+        <Text style={[styles.feedbackText, { color: colors.keepGreen }]}>유지</Text>
+      </Animated.View>
+
+      {/* 삭제 피드백 — 정중앙 고정 */}
+      <Animated.View
+        style={[styles.feedbackPill, deleteIndicatorStyle]}
+        pointerEvents="none"
+      >
+        <Ionicons name="trash-outline" size={20} color={colors.deleteRed} />
+        <Text style={[styles.feedbackText, { color: colors.deleteRed }]}>삭제</Text>
+      </Animated.View>
     </View>
   );
 }
@@ -162,8 +163,9 @@ const styles = StyleSheet.create({
   },
   feedbackPill: {
     position: 'absolute',
-    top: '45%',
-    alignSelf: 'center',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: '-50%' }, { translateY: '-50%' }],
     zIndex: 6,
     flexDirection: 'row',
     alignItems: 'center',
@@ -173,8 +175,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.base,
   },
-  keepPill: {},
-  deletePill: {},
   feedbackText: {
     ...typography.bodySm,
     fontFamily: 'Pretendard-SemiBold',
