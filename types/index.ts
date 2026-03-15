@@ -1,13 +1,5 @@
-import type { Asset } from 'expo-media-library';
-
 /** 사진 판정 결과 */
 export type SwipeDecision = 'keep' | 'delete';
-
-/** 휴지통 아이템 */
-export interface TrashItem {
-  asset: Asset;
-  deletedAt: number;
-}
 
 /** 세션 데이터 */
 export interface SessionData {

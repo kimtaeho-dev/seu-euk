@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,10 +13,9 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as MediaLibrary from 'expo-media-library';
-import { useTrashStore } from '../stores/useTrashStore';
+import type { Asset } from 'expo-media-library';
+import { useTrashAlbum } from '../hooks/useTrashAlbum';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
-import type { TrashItem } from '../types';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const NUM_COLUMNS = 3;
@@ -26,26 +25,42 @@ const ITEM_SIZE = (SCREEN_WIDTH - ITEM_GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
 export default function TrashScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { trashItems, removeFromTrash, clearTrash } = useTrashStore();
+  const trashAlbum = useTrashAlbum();
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const items = await trashAlbum.getTrashAssets();
+        setAssets(items);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   const handleBack = useCallback(() => {
     router.back();
   }, [router]);
 
   const handleRestore = useCallback(
-    (item: TrashItem) => {
-      removeFromTrash(item.asset.id);
+    async (asset: Asset) => {
+      await trashAlbum.removeFromTrash(asset.id);
+      setAssets((prev) => prev.filter((a) => a.id !== asset.id));
     },
-    [removeFromTrash],
+    [trashAlbum],
   );
 
   const handleDeleteAll = useCallback(() => {
-    if (trashItems.length === 0) return;
+    if (assets.length === 0) return;
 
     Alert.alert(
       '전체 삭제',
-      `${trashItems.length}장의 사진을 기기에서 완전히 삭제합니다.\n이 작업은 되돌릴 수 없습니다.`,
+      `${assets.length}장의 사진을 기기에서 완전히 삭제합니다.\n이 작업은 되돌릴 수 없습니다.`,
       [
         { text: '취소', style: 'cancel' },
         {
@@ -54,9 +69,8 @@ export default function TrashScreen() {
           onPress: async () => {
             setIsDeleting(true);
             try {
-              const ids = trashItems.map((item) => item.asset.id);
-              await MediaLibrary.deleteAssetsAsync(ids);
-              clearTrash();
+              await trashAlbum.deleteAll();
+              setAssets([]);
             } catch {
               Alert.alert('오류', '삭제 중 오류가 발생했습니다.');
             } finally {
@@ -66,35 +80,36 @@ export default function TrashScreen() {
         },
       ],
     );
-  }, [trashItems, clearTrash]);
+  }, [assets, trashAlbum]);
 
   const handleRestoreAll = useCallback(() => {
-    if (trashItems.length === 0) return;
+    if (assets.length === 0) return;
 
     Alert.alert(
       '전체 복원',
-      `${trashItems.length}장의 사진을 복원합니다.`,
+      `${assets.length}장의 사진을 복원합니다.`,
       [
         { text: '취소', style: 'cancel' },
         {
           text: '복원',
-          onPress: () => {
-            clearTrash();
+          onPress: async () => {
+            await trashAlbum.restoreAll();
+            setAssets([]);
           },
         },
       ],
     );
-  }, [trashItems, clearTrash]);
+  }, [assets, trashAlbum]);
 
   const renderItem = useCallback(
-    ({ item }: { item: TrashItem }) => {
+    ({ item }: { item: Asset }) => {
       return (
         <Pressable
           style={styles.gridItem}
           onPress={() => handleRestore(item)}
         >
           <Image
-            source={{ uri: item.asset.uri }}
+            source={{ uri: item.uri }}
             style={styles.thumbnail}
           />
         </Pressable>
@@ -104,9 +119,26 @@ export default function TrashScreen() {
   );
 
   const keyExtractor = useCallback(
-    (item: TrashItem) => item.asset.id,
+    (item: Asset) => item.id,
     [],
   );
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          <Pressable onPress={handleBack} style={styles.backButton}>
+            <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
+          </Pressable>
+          <Text style={styles.headerTitle}>휴지통</Text>
+          <View style={styles.headerRight} />
+        </View>
+        <View style={styles.emptyContainer}>
+          <ActivityIndicator color={colors.accent} />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -116,19 +148,19 @@ export default function TrashScreen() {
           <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
         </Pressable>
         <Text style={styles.headerTitle}>
-          휴지통 ({trashItems.length})
+          휴지통 ({assets.length})
         </Text>
         <View style={styles.headerRight} />
       </View>
 
-      {trashItems.length === 0 ? (
+      {assets.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>휴지통이 비어있어요</Text>
         </View>
       ) : (
         <>
           <FlatList
-            data={trashItems}
+            data={assets}
             renderItem={renderItem}
             keyExtractor={keyExtractor}
             numColumns={NUM_COLUMNS}

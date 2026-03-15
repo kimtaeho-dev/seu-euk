@@ -3,19 +3,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useTrashStore } from '../stores/useTrashStore';
 import { colors, typography, spacing, borderRadius } from '../styles/theme';
 
 interface ProgressHeaderProps {
   current: number;
   total: number;
+  trashCount: number;
   onCounterPress?: () => void;
 }
 
-export default function ProgressHeader({ current, total, onCounterPress }: ProgressHeaderProps) {
+export default function ProgressHeader({ current, total, trashCount, onCounterPress }: ProgressHeaderProps) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const trashCount = useTrashStore((s) => s.trashItems.length);
 
   const formattedCurrent = current.toLocaleString();
   const formattedTotal = total.toLocaleString();

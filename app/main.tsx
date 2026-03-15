@@ -17,7 +17,7 @@ import { useDeleteQueue } from '../hooks/useDeleteQueue';
 import { useSession } from '../hooks/useSession';
 import { useSortedAlbum } from '../hooks/useSortedAlbum';
 import { usePhotoStore } from '../stores/usePhotoStore';
-import { useTrashStore } from '../stores/useTrashStore';
+import { useTrashAlbum } from '../hooks/useTrashAlbum';
 import { CONSTANTS } from '../utils/constants';
 import { findPhotoByDate } from '../utils/mediaQuery';
 import SwipeCard from '../components/SwipeCard';
@@ -84,6 +84,7 @@ export default function MainScreen() {
   const { restore, save } = useSession();
   const { enqueue, undo, showUndoToast, flush } = useDeleteQueue();
   const sortedAlbum = useSortedAlbum();
+  const trashAlbum = useTrashAlbum();
   const [showJumpSheet, setShowJumpSheet] = useState(false);
 
   // excludeIds를 ref로 유지하여 loadMore/checkAndPreload에서 재사용
@@ -167,10 +168,8 @@ export default function MainScreen() {
       // 1. 앨범 ID Set 로드
       const sortedIds = await sortedAlbum.initialize();
 
-      // 2. 휴지통 ID Set 합산
-      const trashIds = new Set(
-        useTrashStore.getState().trashItems.map((t) => t.asset.id),
-      );
+      // 2. 휴지통 ID Set 로드
+      const trashIds = await trashAlbum.initialize();
       const excludeIds = new Set([...sortedIds, ...trashIds]);
       excludeIdsRef.current = excludeIds;
       keptCountRef.current = sortedIds.size;
@@ -218,6 +217,7 @@ export default function MainScreen() {
     if (isComplete || (!currentAsset && totalCount > 0)) {
       isCompletingRef.current = true;
       sortedAlbum.forceFlush();
+      trashAlbum.forceFlush();
       flush().then(() => {
         router.replace('/complete');
       });
@@ -264,6 +264,7 @@ export default function MainScreen() {
       <ProgressHeader
         current={processedCount + 1}
         total={totalCount}
+        trashCount={trashAlbum.getTrashCount()}
         onCounterPress={() => setShowJumpSheet(true)}
       />
       <SwipeCard asset={currentAsset} nextAsset={nextAsset} swipe={swipe} />

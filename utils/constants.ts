@@ -40,4 +40,8 @@ export const CONSTANTS = {
   SORTED_ALBUM_NAME: '스윽 정리 완료',
   KEEP_DEBOUNCE_MS: 500,
   SORTED_ALBUM_BATCH: 500,
+
+  // 휴지통 앨범
+  TRASH_ALBUM_NAME: '스윽 휴지통',
+  TRASH_ALBUM_BATCH: 500,
 } as const;

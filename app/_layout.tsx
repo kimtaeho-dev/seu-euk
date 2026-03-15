@@ -8,15 +8,15 @@ import { useFonts } from 'expo-font';
 import { useDeleteQueue } from '../hooks/useDeleteQueue';
 import { useSession } from '../hooks/useSession';
 import { useSortedAlbum } from '../hooks/useSortedAlbum';
-import { useTrashStore } from '../stores/useTrashStore';
+import { useTrashAlbum } from '../hooks/useTrashAlbum';
 import { colors } from '../styles/theme';
 
 export default function RootLayout() {
   const { cancel } = useDeleteQueue();
   const { saveImmediate, session } = useSession();
   const { forceFlush: flushSortedAlbum } = useSortedAlbum();
+  const { forceFlush: flushTrashAlbum } = useTrashAlbum();
   const appState = useRef(AppState.currentState);
-  const loadTrash = useTrashStore((s) => s.loadTrash);
 
   const [fontsLoaded] = useFonts({
     'Pretendard-Regular': require('../assets/fonts/Pretendard-Regular.otf'),
@@ -24,11 +24,6 @@ export default function RootLayout() {
     'Pretendard-SemiBold': require('../assets/fonts/Pretendard-SemiBold.otf'),
     'Pretendard-Bold': require('../assets/fonts/Pretendard-Bold.otf'),
   });
-
-  // 앱 시작 시 휴지통 데이터 복원
-  useEffect(() => {
-    loadTrash();
-  }, [loadTrash]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (nextState: AppStateStatus) => {
@@ -39,6 +34,7 @@ export default function RootLayout() {
         // 앱 이탈 시: 큐 취소 + 앨범 flush + 세션 즉시 저장
         cancel();
         flushSortedAlbum();
+        flushTrashAlbum();
         if (session) {
           saveImmediate(session);
         }
@@ -47,7 +43,7 @@ export default function RootLayout() {
     });
 
     return () => sub.remove();
-  }, [cancel, flushSortedAlbum, saveImmediate, session]);
+  }, [cancel, flushSortedAlbum, flushTrashAlbum, saveImmediate, session]);
 
   if (!fontsLoaded) {
     return null;

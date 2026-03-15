@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { usePhotoStore } from '../stores/usePhotoStore';
-import { useTrashStore } from '../stores/useTrashStore';
+import { useTrashAlbum } from './useTrashAlbum';
 import { CONSTANTS } from '../utils/constants';
 import type { Asset } from 'expo-media-library';
 
@@ -31,18 +31,19 @@ export function useDeleteQueue({ onDeleteFailed }: UseDeleteQueueOptions = {}) {
     }
   }, []);
 
+  const { addToTrash } = useTrashAlbum();
+
   /** 이전 대기 항목을 휴지통으로 즉시 이동 (assets 배열은 건드리지 않음 — trimPastAssets가 정리) */
   const flushPrevious = useCallback(() => {
     const items = usePhotoStore.getState().pendingDeletes;
     if (items.length === 0) return;
 
-    const { addToTrash } = useTrashStore.getState();
     clearPendingDeletes();
     for (const asset of items) {
-      addToTrash(asset);
+      addToTrash(asset.id);
       incrementDeletedCount();
     }
-  }, [clearPendingDeletes, incrementDeletedCount]);
+  }, [clearPendingDeletes, incrementDeletedCount, addToTrash]);
 
   /** 삭제 큐에 추가 (이전 항목은 즉시 휴지통으로 이동) */
   const enqueue = useCallback(
