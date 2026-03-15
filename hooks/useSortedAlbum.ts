@@ -6,7 +6,6 @@ export function useSortedAlbum() {
   const albumRef = useRef<MediaLibrary.Album | null>(null);
   const sortedIdsRef = useRef<Set<string>>(new Set());
   const pendingAssetsRef = useRef<MediaLibrary.Asset[]>([]);
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /** 앨범 조회 + 모든 asset ID를 Set으로 로드 */
   const initialize = useCallback(async (): Promise<Set<string>> => {
@@ -70,22 +69,13 @@ export function useSortedAlbum() {
     }
   }, []);
 
-  /** 유지 사진 추가 (디바운스 배치) */
+  /** 유지 사진 추가 (메모리에만 축적, 앨범 쓰기는 forceFlush 시에만) */
   const addToSorted = useCallback(
     (asset: MediaLibrary.Asset) => {
-      // 낙관적으로 즉시 Set에 추가
       sortedIdsRef.current.add(asset.id);
       pendingAssetsRef.current.push(asset);
-
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-      debounceTimerRef.current = setTimeout(() => {
-        flushPending();
-        debounceTimerRef.current = null;
-      }, CONSTANTS.KEEP_DEBOUNCE_MS);
     },
-    [flushPending],
+    [],
   );
 
   /** 현재 정리완료 ID Set 반환 */
@@ -98,12 +88,8 @@ export function useSortedAlbum() {
     return sortedIdsRef.current.size;
   }, []);
 
-  /** 앱 이탈 시 즉시 flush */
+  /** 앱 이탈/세션 종료 시 앨범 flush */
   const forceFlush = useCallback(() => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-      debounceTimerRef.current = null;
-    }
     flushPending();
   }, [flushPending]);
 

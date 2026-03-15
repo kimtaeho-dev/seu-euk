@@ -10,6 +10,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useKeepAwake } from 'expo-keep-awake';
 import { usePhotos } from '../hooks/usePhotos';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import { useDeleteQueue } from '../hooks/useDeleteQueue';
@@ -61,6 +62,7 @@ const loaderStyles = StyleSheet.create({
 });
 
 export default function MainScreen() {
+  useKeepAwake();
   const router = useRouter();
   const {
     assets,
