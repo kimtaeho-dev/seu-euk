@@ -11,6 +11,8 @@ interface PhotoState {
   totalCount: number;
   /** 삭제한 사진 수 */
   deletedCount: number;
+  /** 현재 세션에서 처리한 사진 수 (keep + delete, trim 독립) */
+  processedCount: number;
   /** 사진 로딩 중 여부 */
   isLoading: boolean;
   /** 다음 페이지 커서 */
@@ -30,6 +32,8 @@ interface PhotoState {
   setCurrentIndex: (index: number) => void;
   setTotalCount: (count: number) => void;
   incrementDeletedCount: () => void;
+  incrementProcessedCount: () => void;
+  decrementProcessedCount: () => void;
   setIsLoading: (loading: boolean) => void;
   setEndCursor: (cursor: string | undefined) => void;
   setHasNextPage: (hasNext: boolean) => void;
@@ -48,6 +52,7 @@ const initialState = {
   currentIndex: 0,
   totalCount: 0,
   deletedCount: 0,
+  processedCount: 0,
   isLoading: true,
   endCursor: undefined as string | undefined,
   hasNextPage: true,
@@ -66,6 +71,10 @@ export const usePhotoStore = create<PhotoState>((set) => ({
   setTotalCount: (count) => set({ totalCount: count }),
   incrementDeletedCount: () =>
     set((state) => ({ deletedCount: state.deletedCount + 1 })),
+  incrementProcessedCount: () =>
+    set((state) => ({ processedCount: state.processedCount + 1 })),
+  decrementProcessedCount: () =>
+    set((state) => ({ processedCount: Math.max(0, state.processedCount - 1) })),
   setIsLoading: (loading) => set({ isLoading: loading }),
   setEndCursor: (cursor) => set({ endCursor: cursor }),
   setHasNextPage: (hasNext) => set({ hasNextPage: hasNext }),

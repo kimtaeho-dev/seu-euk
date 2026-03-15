@@ -76,6 +76,10 @@ export default function MainScreen() {
     checkAndPreload,
   } = usePhotos();
 
+  const processedCount = usePhotoStore((s) => s.processedCount);
+  const incrementProcessedCount = usePhotoStore((s) => s.incrementProcessedCount);
+  const decrementProcessedCount = usePhotoStore((s) => s.decrementProcessedCount);
+
   const nextAsset = assets[currentIndex + 1] ?? undefined;
   const { restore, save } = useSession();
   const { enqueue, undo, showUndoToast, flush } = useDeleteQueue();
@@ -124,6 +128,7 @@ export default function MainScreen() {
         keptCountRef.current += 1;
       }
 
+      incrementProcessedCount();
       const nextIndex = moveToNext();
       checkAndPreload(excludeIdsRef.current);
 
@@ -152,9 +157,10 @@ export default function MainScreen() {
       const store = usePhotoStore.getState();
       store.setCurrentIndex(Math.max(0, store.currentIndex - 1));
       excludeIdsRef.current.delete(restored.id);
+      decrementProcessedCount();
       swipe.resetPosition();
     }
-  }, [undo, swipe]);
+  }, [undo, swipe, decrementProcessedCount]);
 
   useEffect(() => {
     const init = async () => {
@@ -255,7 +261,7 @@ export default function MainScreen() {
   return (
     <View style={styles.container}>
       <ProgressHeader
-        current={currentIndex + 1}
+        current={processedCount + 1}
         total={totalCount}
         onCounterPress={() => setShowJumpSheet(true)}
       />
