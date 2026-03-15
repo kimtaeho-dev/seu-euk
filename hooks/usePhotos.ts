@@ -21,11 +21,26 @@ export function usePhotos() {
     removeAssetById,
   } = usePhotoStore();
 
-  /** 필터링된 사진 로드 (excludeIds 제외, afterCreationTime 이후) */
+  /** 필터링된 사진 로드 (excludeIds 제외, afterCreationTime 이후)
+   *  countFromCreationTime: totalCount를 별도 시점 기준으로 계산 (세션 복원 시 원래 시작 시점) */
   const loadInitial = useCallback(
-    async (excludeIds: Set<string>, afterCreationTime?: number) => {
+    async (excludeIds: Set<string>, afterCreationTime?: number, countFromCreationTime?: number) => {
       setIsLoading(true);
       try {
+        // totalCount를 원래 시작 시점 기준으로 계산 (이중 차감 방지)
+        let adjustedTotal = 0;
+        if (countFromCreationTime !== undefined) {
+          const countQuery: MediaLibrary.AssetsOptions = {
+            first: 1,
+            mediaType: MediaLibrary.MediaType.photo,
+          };
+          if (countFromCreationTime) {
+            countQuery.createdAfter = countFromCreationTime;
+          }
+          const countResult = await MediaLibrary.getAssetsAsync(countQuery);
+          adjustedTotal = Math.max(0, countResult.totalCount - excludeIds.size);
+        }
+
         const queryOptions: MediaLibrary.AssetsOptions = {
           first: CONSTANTS.PAGE_SIZE,
           mediaType: MediaLibrary.MediaType.photo,
@@ -39,7 +54,6 @@ export function usePhotos() {
         let filtered: MediaLibrary.Asset[] = [];
         let cursor: string | undefined;
         let hasMore = true;
-        let rawTotalCount = 0;
 
         // 필터링 루프: 충분한 사진이 모일 때까지 페이지 로드
         while (filtered.length < CONSTANTS.PAGE_SIZE && hasMore) {
@@ -48,8 +62,8 @@ export function usePhotos() {
             after: cursor,
           });
 
-          if (rawTotalCount === 0) {
-            rawTotalCount = result.totalCount;
+          if (adjustedTotal === 0) {
+            adjustedTotal = Math.max(0, result.totalCount - excludeIds.size);
           }
 
           const newFiltered = result.assets.filter(
@@ -59,8 +73,6 @@ export function usePhotos() {
           cursor = result.endCursor;
           hasMore = result.hasNextPage;
         }
-
-        const adjustedTotal = Math.max(0, rawTotalCount - excludeIds.size);
 
         setAssets(filtered);
         setTotalCount(adjustedTotal);

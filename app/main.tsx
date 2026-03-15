@@ -83,16 +83,19 @@ export default function MainScreen() {
   // excludeIds를 ref로 유지하여 loadMore/checkAndPreload에서 재사용
   const excludeIdsRef = useRef<Set<string>>(new Set());
   const keptCountRef = useRef(0);
+  const startCreationTimeRef = useRef<number | undefined>(undefined);
 
   const handleJump = useCallback(
     async (targetCreationTime?: number) => {
       setShowJumpSheet(false);
       await flush();
       usePhotoStore.getState().reset();
+      startCreationTimeRef.current = targetCreationTime;
       await loadInitial(excludeIdsRef.current, targetCreationTime);
       save({
         lastIndex: 0,
         lastCreationTime: targetCreationTime,
+        startCreationTime: targetCreationTime,
         totalCount,
         deletedCount: 0,
         keptCount: keptCountRef.current,
@@ -125,6 +128,7 @@ export default function MainScreen() {
         lastIndex: nextIndex,
         lastAssetId: asset.id,
         lastCreationTime: asset.creationTime,
+        startCreationTime: startCreationTimeRef.current,
         totalCount,
         deletedCount: usePhotoStore.getState().deletedCount,
         keptCount: keptCountRef.current,
@@ -166,8 +170,13 @@ export default function MainScreen() {
       const savedSession = await restore();
 
       if (savedSession?.lastCreationTime) {
-        // creationTime 기반 세션 복원
-        await loadInitial(excludeIds, savedSession.lastCreationTime);
+        // creationTime 기반 세션 복원 (totalCount는 원래 시작 시점 기준)
+        startCreationTimeRef.current = savedSession.startCreationTime;
+        await loadInitial(
+          excludeIds,
+          savedSession.lastCreationTime,
+          savedSession.startCreationTime,
+        );
         if (savedSession.keptCount) {
           keptCountRef.current = savedSession.keptCount;
         }
@@ -182,6 +191,7 @@ export default function MainScreen() {
         await AsyncStorage.removeItem(CONSTANTS.SELECTED_START_YEAR_KEY);
         const targetDate = new Date(Number(selectedYear), 0, 1);
         const result = await findPhotoByDate(targetDate);
+        startCreationTimeRef.current = result.creationTime;
         await loadInitial(excludeIds, result.creationTime);
         return;
       }

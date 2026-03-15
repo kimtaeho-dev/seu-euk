@@ -14,6 +14,8 @@ export interface SessionData {
   lastIndex: number;
   lastAssetId?: string;
   lastCreationTime?: number;
+  /** 정리 시작 시점 (totalCount 계산 기준) */
+  startCreationTime?: number;
   totalCount: number;
   lastUpdated: number;
   deletedCount: number;
