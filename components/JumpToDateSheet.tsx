@@ -70,7 +70,7 @@ export default function JumpToDateSheet({
         if (oldestYear !== null) {
           const currentYear = new Date().getFullYear();
           const yearList: number[] = [];
-          for (let y = oldestYear; y <= currentYear; y++) {
+          for (let y = currentYear; y >= oldestYear; y--) {
             yearList.push(y);
           }
           setYears(yearList);
