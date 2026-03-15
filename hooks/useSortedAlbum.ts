@@ -5,7 +5,8 @@ import { CONSTANTS } from '../utils/constants';
 export function useSortedAlbum() {
   const albumRef = useRef<MediaLibrary.Album | null>(null);
   const sortedIdsRef = useRef<Set<string>>(new Set());
-  const pendingAssetsRef = useRef<MediaLibrary.Asset[]>([]);
+  /** Asset 객체 대신 ID만 보관하여 메모리 절약 */
+  const pendingIdsRef = useRef<string[]>([]);
 
   /** 앨범 조회 + 모든 asset ID를 Set으로 로드 */
   const initialize = useCallback(async (): Promise<Set<string>> => {
@@ -41,17 +42,16 @@ export function useSortedAlbum() {
     return sortedIdsRef.current;
   }, []);
 
-  /** 실제 앨범 쓰기 (배치) */
+  /** 실제 앨범 쓰기 (배치) — ID로 앨범에 추가 */
   const flushPending = useCallback(async () => {
-    const assets = pendingAssetsRef.current;
-    if (assets.length === 0) return;
+    const ids = pendingIdsRef.current;
+    if (ids.length === 0) return;
 
-    pendingAssetsRef.current = [];
+    pendingIdsRef.current = [];
 
     try {
       if (!albumRef.current) {
-        // 첫 keep: 앨범 생성 (첫 번째 asset으로)
-        const [first, ...rest] = assets;
+        const [first, ...rest] = ids;
         albumRef.current = await MediaLibrary.createAlbumAsync(
           CONSTANTS.SORTED_ALBUM_NAME,
           first,
@@ -61,19 +61,18 @@ export function useSortedAlbum() {
           await MediaLibrary.addAssetsToAlbumAsync(rest, albumRef.current, false);
         }
       } else {
-        await MediaLibrary.addAssetsToAlbumAsync(assets, albumRef.current, false);
+        await MediaLibrary.addAssetsToAlbumAsync(ids, albumRef.current, false);
       }
     } catch (e) {
-      // 실패 시 다음 배치에 재시도
       console.warn('[useSortedAlbum] flush failed:', e);
     }
   }, []);
 
-  /** 유지 사진 추가 (메모리에만 축적, 앨범 쓰기는 forceFlush 시에만) */
+  /** 유지 사진 추가 (메모리에 ID만 축적) */
   const addToSorted = useCallback(
     (asset: MediaLibrary.Asset) => {
       sortedIdsRef.current.add(asset.id);
-      pendingAssetsRef.current.push(asset);
+      pendingIdsRef.current.push(asset.id);
     },
     [],
   );

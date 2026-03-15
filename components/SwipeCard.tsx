@@ -80,6 +80,7 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
             style={styles.blurBackground}
             contentFit="cover"
             blurRadius={40}
+            cachePolicy="disk"
             recyclingKey={`next-blur-${displayNextAsset.id}`}
           />
           <Image
@@ -106,6 +107,7 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
                 style={[styles.blurBackground, { opacity: imageReady ? 1 : 0 }]}
                 contentFit="cover"
                 blurRadius={40}
+                cachePolicy="disk"
               />
               <Image
                 key={retryKey}

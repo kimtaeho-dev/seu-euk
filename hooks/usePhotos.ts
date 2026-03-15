@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
 import * as MediaLibrary from 'expo-media-library';
+import { Image } from 'expo-image';
 import { usePhotoStore } from '../stores/usePhotoStore';
 import { CONSTANTS } from '../utils/constants';
 
@@ -152,6 +153,10 @@ export function usePhotos() {
     moveCount.current += 1;
     if (moveCount.current % CONSTANTS.TRIM_INTERVAL === 0) {
       usePhotoStore.getState().trimPastAssets();
+    }
+    // 주기적으로 이미지 메모리 캐시 해제
+    if (moveCount.current % CONSTANTS.CACHE_CLEAR_INTERVAL === 0) {
+      Image.clearMemoryCache();
     }
 
     return nextIndex;

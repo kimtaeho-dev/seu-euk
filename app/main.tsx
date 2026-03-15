@@ -217,7 +217,7 @@ export default function MainScreen() {
     }
   }, [isComplete, isLoading, currentAsset, totalCount, router, flush, sortedAlbum]);
 
-  // 다음 N장 이미지 프리페치
+  // 다음 N장 이미지 프리페치 (현재 윈도우만 추적하여 메모리 절약)
   const prefetchedRef = useRef(new Set<string>());
   useEffect(() => {
     const upcoming = assets.slice(
@@ -229,7 +229,9 @@ export default function MainScreen() {
       .filter((uri) => !prefetchedRef.current.has(uri));
 
     if (uris.length > 0) {
-      uris.forEach((uri) => prefetchedRef.current.add(uri));
+      // 이전 프리페치 기록 초기화하여 Set 무한 증가 방지
+      const currentUris = new Set(upcoming.map((a) => a.uri));
+      prefetchedRef.current = currentUris;
       Image.prefetch(uris);
     }
   }, [assets, currentIndex]);
