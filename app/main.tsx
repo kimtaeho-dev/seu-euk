@@ -86,6 +86,7 @@ export default function MainScreen() {
   const excludeIdsRef = useRef<Set<string>>(new Set());
   const keptCountRef = useRef(0);
   const startCreationTimeRef = useRef<number | undefined>(undefined);
+  const isCompletingRef = useRef(false);
 
   const handleJump = useCallback(
     async (targetCreationTime?: number) => {
@@ -205,9 +206,10 @@ export default function MainScreen() {
   }, []);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || isCompletingRef.current) return;
 
     if (isComplete || (!currentAsset && totalCount > 0)) {
+      isCompletingRef.current = true;
       sortedAlbum.forceFlush();
       flush().then(() => {
         router.replace('/complete');
