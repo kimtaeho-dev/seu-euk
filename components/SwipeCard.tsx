@@ -58,9 +58,8 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
     if (isForward) {
       setImageReady(false);
     } else {
-      // Backward transition (undo): behind-card를 올바른 다음 사진으로 설정 후 로딩
+      // Backward transition (undo): behind-card만 갱신, 카드는 불투명 유지
       setDisplayNextAsset(nextAsset);
-      setImageReady(false);
     }
     setImageError(false);
     retryCount.current = 0;
@@ -107,7 +106,6 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
                 style={[styles.blurBackground, { opacity: imageReady ? 1 : 0 }]}
                 contentFit="cover"
                 blurRadius={40}
-                recyclingKey={`blur-${asset.id}`}
               />
               <Image
                 key={retryKey}
@@ -116,7 +114,6 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
                 contentFit="contain"
                 onLoad={handleLoadEnd}
                 onError={handleError}
-                recyclingKey={asset.id}
               />
               {/* 비네팅 오버레이 */}
               <LinearGradient
