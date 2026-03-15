@@ -6,11 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#131118"
-    },
+    "backgroundColor": "#131118",
     "ios": {
       "supportsTablet": false,
       "infoPlist": {

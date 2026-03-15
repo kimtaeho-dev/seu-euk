@@ -1,18 +1,15 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
-import * as SplashScreen from 'expo-splash-screen';
 import { useDeleteQueue } from '../hooks/useDeleteQueue';
 import { useSession } from '../hooks/useSession';
 import { useSortedAlbum } from '../hooks/useSortedAlbum';
 import { useTrashStore } from '../stores/useTrashStore';
 import { colors } from '../styles/theme';
-
-SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const { cancel } = useDeleteQueue();
@@ -27,12 +24,6 @@ export default function RootLayout() {
     'Pretendard-SemiBold': require('../assets/fonts/Pretendard-SemiBold.otf'),
     'Pretendard-Bold': require('../assets/fonts/Pretendard-Bold.otf'),
   });
-
-  const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded) {
-      await SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
 
   // 앱 시작 시 휴지통 데이터 복원
   useEffect(() => {
@@ -65,7 +56,6 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView
       style={{ flex: 1, backgroundColor: colors.backgroundDark }}
-      onLayout={onLayoutRootView}
     >
       <SafeAreaProvider>
         <StatusBar style="light" />
