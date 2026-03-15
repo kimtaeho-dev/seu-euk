@@ -22,10 +22,11 @@ export function usePhotos() {
     removeAssetById,
   } = usePhotoStore();
 
-  /** 필터링된 사진 로드 (excludeIds 제외, afterCreationTime 이후)
+  /** 필터링된 사진 로드 (최신→과거 정렬, excludeIds 제외)
+   *  beforeCreationTime: 이 시점 이전 사진만 로드 (세션 복원/날짜 점프)
    *  countFromCreationTime: totalCount를 별도 시점 기준으로 계산 (세션 복원 시 원래 시작 시점) */
   const loadInitial = useCallback(
-    async (excludeIds: Set<string>, afterCreationTime?: number, countFromCreationTime?: number) => {
+    async (excludeIds: Set<string>, beforeCreationTime?: number, countFromCreationTime?: number) => {
       setIsLoading(true);
       try {
         // totalCount를 원래 시작 시점 기준으로 계산 (이중 차감 방지)
@@ -36,7 +37,7 @@ export function usePhotos() {
             mediaType: MediaLibrary.MediaType.photo,
           };
           if (countFromCreationTime) {
-            countQuery.createdAfter = countFromCreationTime;
+            countQuery.createdBefore = countFromCreationTime;
           }
           const countResult = await MediaLibrary.getAssetsAsync(countQuery);
           adjustedTotal = Math.max(0, countResult.totalCount - excludeIds.size);
@@ -45,11 +46,11 @@ export function usePhotos() {
         const queryOptions: MediaLibrary.AssetsOptions = {
           first: CONSTANTS.PAGE_SIZE,
           mediaType: MediaLibrary.MediaType.photo,
-          sortBy: [[MediaLibrary.SortBy.creationTime, true]],
+          sortBy: [[MediaLibrary.SortBy.creationTime, false]],
         };
 
-        if (afterCreationTime) {
-          queryOptions.createdAfter = afterCreationTime;
+        if (beforeCreationTime) {
+          queryOptions.createdBefore = beforeCreationTime;
         }
 
         let filtered: MediaLibrary.Asset[] = [];
@@ -94,7 +95,7 @@ export function usePhotos() {
     ],
   );
 
-  /** 다음 페이지 프리로드 (필터링 포함) */
+  /** 다음 페이지 프리로드 (필터링 포함, 최신→과거) */
   const loadMore = useCallback(
     async (excludeIds: Set<string>) => {
       if (!hasNextPage || isLoading || !endCursor) return;
@@ -110,7 +111,7 @@ export function usePhotos() {
             first: CONSTANTS.PAGE_SIZE,
             after: cursor,
             mediaType: MediaLibrary.MediaType.photo,
-            sortBy: [[MediaLibrary.SortBy.creationTime, true]],
+            sortBy: [[MediaLibrary.SortBy.creationTime, false]],
           });
 
           const newFiltered = result.assets.filter(

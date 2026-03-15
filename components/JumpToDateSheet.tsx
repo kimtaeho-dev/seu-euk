@@ -119,7 +119,8 @@ export default function JumpToDateSheet({
       setPreviewCreationTime(undefined);
 
       try {
-        const targetDate = new Date(selectedYear, selectedMonth, 1);
+        // 선택한 월의 다음 달 1일 = 해당 월 전체 포함 (createdBefore 기준)
+        const targetDate = new Date(selectedYear, selectedMonth + 1, 1);
         const result = await findPhotoByDate(targetDate);
 
         setPreviewCreationTime(result.creationTime);
@@ -279,7 +280,7 @@ export default function JumpToDateSheet({
                     </View>
                   </View>
                 ) : (
-                  <Text style={styles.noPhotoText}>해당 시점 이후 사진이 없습니다</Text>
+                  <Text style={styles.noPhotoText}>해당 시점의 사진이 없습니다</Text>
                 )}
               </View>
             )}

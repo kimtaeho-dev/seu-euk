@@ -198,7 +198,8 @@ export default function MainScreen() {
       );
       if (selectedYear) {
         await AsyncStorage.removeItem(CONSTANTS.SELECTED_START_YEAR_KEY);
-        const targetDate = new Date(Number(selectedYear), 0, 1);
+        // 선택한 연도의 다음 해 1월 1일 = 해당 연도 전체 포함
+        const targetDate = new Date(Number(selectedYear) + 1, 0, 1);
         const result = await findPhotoByDate(targetDate);
         startCreationTimeRef.current = result.creationTime;
         await loadInitial(excludeIds, result.creationTime);
