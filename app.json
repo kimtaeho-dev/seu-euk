@@ -7,6 +7,9 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#131118",
+    "splash": {
+      "backgroundColor": "#131118"
+    },
     "ios": {
       "supportsTablet": false,
       "infoPlist": {
@@ -48,7 +51,14 @@
           "isAccessMediaLocationEnabled": false
         }
       ],
-      "expo-image"
+      "expo-image",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#131118"
+        }
+      ],
+      "expo-system-ui"
     ],
     "scheme": "seu-euk"
   }
