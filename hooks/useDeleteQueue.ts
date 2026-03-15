@@ -19,7 +19,6 @@ export function useDeleteQueue({ onDeleteFailed }: UseDeleteQueueOptions = {}) {
     setLastDeletedAsset,
     setShowUndoToast,
     incrementDeletedCount,
-    removeAssetById,
   } = usePhotoStore();
 
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -32,7 +31,7 @@ export function useDeleteQueue({ onDeleteFailed }: UseDeleteQueueOptions = {}) {
     }
   }, []);
 
-  /** 이전 대기 항목을 휴지통으로 즉시 이동 */
+  /** 이전 대기 항목을 휴지통으로 즉시 이동 (assets 배열은 건드리지 않음 — trimPastAssets가 정리) */
   const flushPrevious = useCallback(() => {
     const items = usePhotoStore.getState().pendingDeletes;
     if (items.length === 0) return;
@@ -41,10 +40,9 @@ export function useDeleteQueue({ onDeleteFailed }: UseDeleteQueueOptions = {}) {
     clearPendingDeletes();
     for (const asset of items) {
       addToTrash(asset);
-      removeAssetById(asset.id);
       incrementDeletedCount();
     }
-  }, [clearPendingDeletes, removeAssetById, incrementDeletedCount]);
+  }, [clearPendingDeletes, incrementDeletedCount]);
 
   /** 삭제 큐에 추가 (이전 항목은 즉시 휴지통으로 이동) */
   const enqueue = useCallback(

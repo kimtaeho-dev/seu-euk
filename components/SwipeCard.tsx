@@ -57,6 +57,10 @@ export default function SwipeCard({ asset, nextAsset, swipe }: SwipeCardProps) {
     const isForward = displayNextAsset?.id === asset.id;
     if (isForward) {
       setImageReady(false);
+    } else {
+      // Backward transition (undo): behind-card를 올바른 다음 사진으로 설정 후 로딩
+      setDisplayNextAsset(nextAsset);
+      setImageReady(false);
     }
     setImageError(false);
     retryCount.current = 0;

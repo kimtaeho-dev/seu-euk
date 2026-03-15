@@ -110,6 +110,7 @@ export default function MainScreen() {
 
       if (decision === 'delete') {
         enqueue(asset);
+        excludeIdsRef.current.add(asset.id);
       } else if (decision === 'keep') {
         sortedAlbum.addToSorted(asset);
         // keep한 asset도 excludeIds에 추가 (다음 loadMore에서 필터링)
@@ -143,6 +144,7 @@ export default function MainScreen() {
     if (restored) {
       const store = usePhotoStore.getState();
       store.setCurrentIndex(Math.max(0, store.currentIndex - 1));
+      excludeIdsRef.current.delete(restored.id);
       swipe.resetPosition();
     }
   }, [undo, swipe]);

@@ -25,8 +25,8 @@ describe('usePhotoStore', () => {
     expect(state.currentIndex).toBe(0);
     expect(state.totalCount).toBe(0);
     expect(state.deletedCount).toBe(0);
-    expect(state.isLoading).toBe(false);
-    expect(state.deleteQueue).toBeNull();
+    expect(state.isLoading).toBe(true);
+    expect(state.pendingDeletes).toEqual([]);
     expect(state.showUndoToast).toBe(false);
   });
 
@@ -49,6 +49,13 @@ describe('usePhotoStore', () => {
     expect(ids).toEqual(['1', '3']);
   });
 
+  it('removeAssetById 시 currentIndex가 올바르게 조정된다', () => {
+    usePhotoStore.getState().setAssets([mockAsset('1'), mockAsset('2'), mockAsset('3')]);
+    usePhotoStore.getState().setCurrentIndex(2);
+    usePhotoStore.getState().removeAssetById('1');
+    expect(usePhotoStore.getState().currentIndex).toBe(1);
+  });
+
   it('incrementDeletedCount로 삭제 카운트를 증가시킨다', () => {
     expect(usePhotoStore.getState().deletedCount).toBe(0);
     usePhotoStore.getState().incrementDeletedCount();
@@ -56,10 +63,17 @@ describe('usePhotoStore', () => {
     expect(usePhotoStore.getState().deletedCount).toBe(2);
   });
 
-  it('setDeleteQueue로 삭제 큐를 설정한다', () => {
-    const item = { asset: mockAsset('1'), timestamp: Date.now() };
-    usePhotoStore.getState().setDeleteQueue(item);
-    expect(usePhotoStore.getState().deleteQueue).toEqual(item);
+  it('addPendingDelete로 삭제 대기 목록에 추가한다', () => {
+    const asset = mockAsset('1');
+    usePhotoStore.getState().addPendingDelete(asset);
+    expect(usePhotoStore.getState().pendingDeletes).toHaveLength(1);
+    expect(usePhotoStore.getState().pendingDeletes[0].id).toBe('1');
+  });
+
+  it('clearPendingDeletes로 삭제 대기 목록을 비운다', () => {
+    usePhotoStore.getState().addPendingDelete(mockAsset('1'));
+    usePhotoStore.getState().clearPendingDeletes();
+    expect(usePhotoStore.getState().pendingDeletes).toEqual([]);
   });
 
   it('reset으로 초기 상태로 돌아간다', () => {
